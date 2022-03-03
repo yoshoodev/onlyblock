@@ -1,4 +1,4 @@
-package Oneblock;
+package oneblock;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.entity.Player;
@@ -8,22 +8,27 @@ public class OBP extends PlaceholderExpansion {
     public boolean canRegister() {
         return true;
     }
+
     @Override
     public String getAuthor() {
         return "MrMarL";
     }
+
     @Override
     public String getIdentifier() {
         return "OB";
     }
+
     @Override
     public String getPlugin() {
         return null;
     }
+
     @Override
     public String getVersion() {
         return "0.9.6";
     }
+
     @Override
     public String onPlaceholderRequest(Player p, String identifier) {
         // %OB_ver%
@@ -63,14 +68,14 @@ public class OBP extends PlaceholderExpansion {
             return Oneblock.pInf.get(Oneblock.GetId(p.getName())).nick;
         }
         // %OB_top_%d_name%
-        for(int i = 0;i<10;i++) {
-        	if (identifier.equals(String.format("top_%d_name", i+1)))
+        for (int i = 0; i < 10; i++) {
+            if (identifier.equals(String.format("top_%d_name", i + 1)))
                 return Oneblock.gettop(i).nick;
         }
         // %OB_top_%d_lvl%
-        for(int i = 0;i<10;i++) {
-        	if (identifier.equals(String.format("top_%d_lvl", i+1)))
-                return String.format("%d",Oneblock.gettop(i).lvl);
+        for (int i = 0; i < 10; i++) {
+            if (identifier.equals(String.format("top_%d_lvl", i + 1)))
+                return String.format("%d", Oneblock.gettop(i).lvl);
         }
         // %OB_number_of_invited%
         if (identifier.equals("number_of_invited")) {

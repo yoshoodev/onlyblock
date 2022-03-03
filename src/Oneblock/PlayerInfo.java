@@ -1,4 +1,4 @@
-package Oneblock;
+package oneblock;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -11,11 +11,12 @@ public class PlayerInfo {
 	public int lvl = 0;
 	public int breaks = 0;
 	public BossBar bar = null;
-	
+
 	void lvlup() {
 		++lvl;
 		breaks = 0;
 	}
+
 	public static final Comparator<PlayerInfo> COMPARE_BY_LVL = new Comparator<PlayerInfo>() {
 		@Override
 		public int compare(PlayerInfo lhs, PlayerInfo rhs) {

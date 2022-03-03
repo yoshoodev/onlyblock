@@ -1,4 +1,4 @@
-package Oneblock;
+package oneblock;
 
 import org.bukkit.Bukkit;
 
@@ -39,12 +39,16 @@ import java.util.*;
 
 /**
  * <b>XBlock</b> - MaterialData/BlockData Support<br>
- * BlockState (Old): https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/BlockState.html
- * BlockData (New): https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/data/BlockData.html
- * MaterialData (Old): https://hub.spigotmc.org/javadocs/spigot/org/bukkit/material/MaterialData.html
+ * BlockState (Old):
+ * https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/BlockState.html
+ * BlockData (New):
+ * https://hub.spigotmc.org/javadocs/spigot/org/bukkit/block/data/BlockData.html
+ * MaterialData (Old):
+ * https://hub.spigotmc.org/javadocs/spigot/org/bukkit/material/MaterialData.html
  * <p>
  * All the parameters are non-null except the ones marked as nullable.
- * This class doesn't and shouldn't support materials that are {@link Material#isLegacy()}.
+ * This class doesn't and shouldn't support materials that are
+ * {@link Material#isLegacy()}.
  *
  * @author Crypto Morin
  * @version 2.2.0
@@ -57,12 +61,11 @@ import java.util.*;
 public final class XBlock {
     public static final Set<XMaterial> CROPS = Collections.unmodifiableSet(EnumSet.of(
             XMaterial.CARROT, XMaterial.POTATO, XMaterial.NETHER_WART, XMaterial.WHEAT_SEEDS, XMaterial.PUMPKIN_SEEDS,
-            XMaterial.MELON_SEEDS, XMaterial.BEETROOT_SEEDS, XMaterial.SUGAR_CANE, XMaterial.BAMBOO_SAPLING, XMaterial.CHORUS_PLANT,
-            XMaterial.KELP, XMaterial.SEA_PICKLE, XMaterial.BROWN_MUSHROOM, XMaterial.RED_MUSHROOM
-    ));
+            XMaterial.MELON_SEEDS, XMaterial.BEETROOT_SEEDS, XMaterial.SUGAR_CANE, XMaterial.BAMBOO_SAPLING,
+            XMaterial.CHORUS_PLANT,
+            XMaterial.KELP, XMaterial.SEA_PICKLE, XMaterial.BROWN_MUSHROOM, XMaterial.RED_MUSHROOM));
     public static final Set<XMaterial> DANGEROUS = Collections.unmodifiableSet(EnumSet.of(
-            XMaterial.MAGMA_BLOCK, XMaterial.LAVA, XMaterial.CAMPFIRE, XMaterial.FIRE, XMaterial.SOUL_FIRE
-    ));
+            XMaterial.MAGMA_BLOCK, XMaterial.LAVA, XMaterial.CAMPFIRE, XMaterial.FIRE, XMaterial.SOUL_FIRE));
     public static final byte CAKE_SLICES = 6;
     private static final boolean ISFLAT = XMaterial.supports(13);
     private static final Map<XMaterial, XMaterial> ITEM_TO_BLOCK = new EnumMap<>(XMaterial.class);
@@ -83,7 +86,8 @@ public final class XBlock {
         ITEM_TO_BLOCK.put(XMaterial.PUMPKIN_PIE, XMaterial.PUMPKIN);
     }
 
-    private XBlock() { }
+    private XBlock() {
+    }
 
     public static boolean isCake(@Nullable Material material) {
         return material == Material.CAKE || material == BlockMaterial.CAKE_BLOCK.material;
@@ -98,7 +102,8 @@ public final class XBlock {
     }
 
     public static boolean isBeetroot(@Nullable Material material) {
-        return material == Material.BEETROOT || material == Material.BEETROOTS || material == BlockMaterial.BEETROOT_BLOCK.material;
+        return material == Material.BEETROOT || material == Material.BEETROOTS
+                || material == BlockMaterial.BEETROOT_BLOCK.material;
     }
 
     public static boolean isNetherWart(@Nullable Material material) {
@@ -110,32 +115,36 @@ public final class XBlock {
     }
 
     public static boolean isMelon(@Nullable Material material) {
-        return material == Material.MELON || material == Material.MELON_SLICE || material == BlockMaterial.MELON_BLOCK.material;
+        return material == Material.MELON || material == Material.MELON_SLICE
+                || material == BlockMaterial.MELON_BLOCK.material;
     }
 
     public static boolean isPotato(@Nullable Material material) {
         return material == Material.POTATO || material == Material.POTATOES;
     }
-    
+
     public static boolean setCustomType(@Nonnull Location loc, String command) {
-    	Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
-    			String.format(command, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
-    	return true;
+        Bukkit.dispatchCommand(Bukkit.getConsoleSender(),
+                String.format(command, loc.getBlockX(), loc.getBlockY(), loc.getBlockZ()));
+        return true;
     }
-    
+
     public static boolean setType(@Nonnull Block block, @Nullable Object material_) {
-    	XMaterial material = null;
-    	if (material_.getClass() == XMaterial.class)
-    		material = (XMaterial)material_;
-    	else
-    		return setCustomType(block.getLocation(), (String)material_);
-    	
+        XMaterial material = null;
+        if (material_.getClass() == XMaterial.class)
+            material = (XMaterial) material_;
+        else
+            return setCustomType(block.getLocation(), (String) material_);
+
         XMaterial smartConversion = ITEM_TO_BLOCK.get(material);
-        if (smartConversion != null) material = smartConversion;
-        if (material.parseMaterial() == null) return false;
+        if (smartConversion != null)
+            material = smartConversion;
+        if (material.parseMaterial() == null)
+            return false;
 
         block.setType(material.parseMaterial());
-        if (XMaterial.supports(13)) return false;
+        if (XMaterial.supports(13))
+            return false;
 
         String parsedName = material.parseMaterial().name();
         if (parsedName.endsWith("_ITEM")) {
@@ -149,7 +158,8 @@ public final class XBlock {
         }
 
         LegacyMaterial legacyMaterial = LegacyMaterial.getMaterial(parsedName);
-        if (legacyMaterial == LegacyMaterial.BANNER) block.setType(LegacyMaterial.STANDING_BANNER.material);
+        if (legacyMaterial == LegacyMaterial.BANNER)
+            block.setType(LegacyMaterial.STANDING_BANNER.material);
         LegacyMaterial.Handling handling = legacyMaterial == null ? null : legacyMaterial.handling;
 
         BlockState state = block.getState();
@@ -161,10 +171,12 @@ public final class XBlock {
                 String xName = material.name();
                 int colorIndex = xName.indexOf('_');
                 String color = xName.substring(0, colorIndex);
-                if (color.equals("LIGHT")) color = xName.substring(0, "LIGHT_".length() + 4);
+                if (color.equals("LIGHT"))
+                    color = xName.substring(0, "LIGHT_".length() + 4);
 
                 banner.setBaseColor(DyeColor.valueOf(color));
-            } else state.setRawData(material.getData());
+            } else
+                state.setRawData(material.getData());
             update = true;
         } else if (handling == LegacyMaterial.Handling.WOOD_SPECIES) {
             // Wood doesn't exist in 1.8
@@ -173,7 +185,8 @@ public final class XBlock {
 
             String name = material.name();
             int firstIndicator = name.indexOf('_');
-            if (firstIndicator < 0) return false;
+            if (firstIndicator < 0)
+                return false;
             String woodType = name.substring(0, firstIndicator);
 
             TreeSpecies species;
@@ -196,7 +209,8 @@ public final class XBlock {
                 }
             }
 
-            // Doesn't handle stairs, slabs, fence and fence gates as they had their own separate materials.
+            // Doesn't handle stairs, slabs, fence and fence gates as they had their own
+            // separate materials.
             boolean firstType = false;
             switch (legacyMaterial) {
                 case WOOD:
@@ -215,11 +229,15 @@ public final class XBlock {
                         case REDWOOD:
                         case BIRCH:
                         case JUNGLE:
-                            if (!firstType) throw new AssertionError("Invalid tree species " + species + " for block type" + legacyMaterial + ", use block type 2 instead");
+                            if (!firstType)
+                                throw new AssertionError("Invalid tree species " + species + " for block type"
+                                        + legacyMaterial + ", use block type 2 instead");
                             break;
                         case ACACIA:
                         case DARK_OAK:
-                            if (firstType) throw new AssertionError("Invalid tree species " + species + " for block type 2 " + legacyMaterial + ", use block type instead");
+                            if (firstType)
+                                throw new AssertionError("Invalid tree species " + species + " for block type 2 "
+                                        + legacyMaterial + ", use block type instead");
                             break;
                     }
                     state.setRawData((byte) ((state.getRawData() & 0xC) | (species.getData() & 0x3)));
@@ -238,7 +256,8 @@ public final class XBlock {
             update = true;
         }
 
-        if (update) state.update();
+        if (update)
+            state.update();
         return update;
     }
 
@@ -254,8 +273,10 @@ public final class XBlock {
      * <b>Universal Method</b>
      * <p>
      * Check if the block type matches the specified XMaterial.
-     * Note that this method assumes that you've already tried doing {@link XMaterial#matchXMaterial(Material)} using
-     * {@link Block#getType()} and compared it with the other XMaterial. If not, use {@link #isSimilar(Block, XMaterial)}
+     * Note that this method assumes that you've already tried doing
+     * {@link XMaterial#matchXMaterial(Material)} using
+     * {@link Block#getType()} and compared it with the other XMaterial. If not, use
+     * {@link #isSimilar(Block, XMaterial)}
      *
      * @param block    the block to check.
      * @param material the XMaterial similar to this block type.
@@ -296,8 +317,8 @@ public final class XBlock {
             case CAVE_AIR:
             case VOID_AIR:
                 return isAir(mat);
-		default:
-			return false;
+            default:
+                return false;
         }
     }
 
@@ -347,11 +368,14 @@ public final class XBlock {
             return LOOKUP.get(name);
         }
 
-        private enum Handling {COLORABLE, WOOD_SPECIES;}
+        private enum Handling {
+            COLORABLE, WOOD_SPECIES;
+        }
     }
 
     /**
-     * An enum with cached legacy materials which can be used when comparing blocks with blocks and blocks with items.
+     * An enum with cached legacy materials which can be used when comparing blocks
+     * with blocks and blocks with items.
      *
      * @since 2.0.0
      */
