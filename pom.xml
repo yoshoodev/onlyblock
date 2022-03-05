@@ -78,4 +78,11 @@
 		</dependency>
 
 	</dependencies>
+	<distributionManagement>
+		<repository>
+			<id>github</id>
+			<name>OnlyBlock PKG</name>
+			<url>https://maven.pkg.github.com/yoshoodev/onlyblock</url>
+		</repository>
+	</distributionManagement>
 </project>
