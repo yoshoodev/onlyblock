@@ -3,6 +3,13 @@
 	<groupId>Oneblock</groupId>
 	<artifactId>Oneblock</artifactId>
 	<version>0.9.7</version>
+	<distributionManagement>
+		<repository>
+			<id>github</id>
+			<name>OnlyBlock PKG</name>
+			<url>https://maven.pkg.github.com/yoshoodev/onlyblock</url>
+		</repository>
+	</distributionManagement>
 	<build>
 		<plugins>
 			<plugin>
@@ -78,11 +85,5 @@
 		</dependency>
 
 	</dependencies>
-	<distributionManagement>
-		<repository>
-			<id>github</id>
-			<name>OnlyBlock PKG</name>
-			<url>https://maven.pkg.github.com/yoshoodev/onlyblock</url>
-		</repository>
-	</distributionManagement>
+
 </project>
