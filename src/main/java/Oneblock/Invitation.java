@@ -1,4 +1,4 @@
-package oneblock;
+package Oneblock;
 
 public class Invitation {
 	public String Inviting;

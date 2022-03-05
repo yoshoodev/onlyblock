@@ -1,4 +1,4 @@
-package oneblock;
+package Oneblock;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.entity.Player;
@@ -11,7 +11,7 @@ public class OBP extends PlaceholderExpansion {
 
     @Override
     public String getAuthor() {
-        return "MrMarL";
+        return "YoshooDev";
     }
 
     @Override
@@ -26,14 +26,14 @@ public class OBP extends PlaceholderExpansion {
 
     @Override
     public String getVersion() {
-        return "0.9.6";
+        return "0.0.1";
     }
 
     @Override
     public String onPlaceholderRequest(Player p, String identifier) {
         // %OB_ver%
         if (identifier.equals("ver")) {
-            return "0.9.6";
+            return "0.0.1";
         }
         // %OB_lvl%
         if (identifier.equals("lvl")) {
@@ -61,11 +61,11 @@ public class OBP extends PlaceholderExpansion {
         }
         // %OB_player_count%
         if (identifier.equals("player_count")) {
-            return String.format("%d", Oneblock.plonl.size());
+            return String.format("%d", Oneblock.online.size());
         }
         // %OB_owner_name%
         if (identifier.equals("owner_name")) {
-            return Oneblock.pInf.get(Oneblock.GetId(p.getName())).nick;
+            return Oneblock.pInf.get(Oneblock.getID(p.getName())).nick;
         }
         // %OB_top_%d_name%
         for (int i = 0; i < 10; i++) {
@@ -79,7 +79,7 @@ public class OBP extends PlaceholderExpansion {
         }
         // %OB_number_of_invited%
         if (identifier.equals("number_of_invited")) {
-            return String.format("%d", Oneblock.pInf.get(Oneblock.GetId(p.getName())).nicks.size());
+            return String.format("%d", Oneblock.pInf.get(Oneblock.getID(p.getName())).nicks.size());
         }
         return null;
     }

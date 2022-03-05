@@ -1,4 +1,4 @@
-package oneblock;
+package Oneblock;
 
 /*
  * The MIT License (MIT)

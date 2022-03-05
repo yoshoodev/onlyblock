@@ -1,4 +1,4 @@
-package oneblock;
+package Oneblock;
 
 import org.bukkit.Bukkit;
 
