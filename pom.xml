@@ -2,14 +2,7 @@
 	<modelVersion>4.0.0</modelVersion>
 	<groupId>Oneblock</groupId>
 	<artifactId>Oneblock</artifactId>
-	<version>0.9.7</version>
-	<distributionManagement>
-		<repository>
-			<id>github</id>
-			<name>GitHub Packages</name>
-			<url>https://maven.pkg.github.com/yoshoodev/onlyblock</url>
-		</repository>
-	</distributionManagement>
+	<version>0.0.1</version>
 	<build>
 		<plugins>
 			<plugin>
@@ -83,7 +76,16 @@
 			<version>6.2</version>
 			<scope>provided</scope>
 		</dependency>
-
 	</dependencies>
+
+	<distributionManagement>
+		<repository>
+			<uniqueVersion>false</uniqueVersion>
+			<id>github</id>
+			<name>GitHub Packages</name>
+			<url>https://maven.pkg.github.com/yoshoodev/onlyblock</url>
+			<layout>default</layout>
+		</repository>
+	</distributionManagement>
 
 </project>
