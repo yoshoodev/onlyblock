@@ -855,19 +855,19 @@ public class Oneblock extends JavaPlugin {
                     if (args[1].equalsIgnoreCase("settext")) {
                         if (!progressBar)
                             return true;
-                        String textBar = "";
+                        StringBuilder textBar = new StringBuilder();
                         for (int i = 2; i < args.length - 1; i++)
-                            textBar += args[i] + " ";
-                        textBar += args[args.length - 1];
+                            textBar.append(args[i] + " ");
+                        textBar.append(args[args.length - 1]);
                         levelBarMode = false;
                         for (PlayerInfo bb : pInf)
-                            bb.bar.setTitle(textBar);
-                        config.set(progressbartext, textBar);
-                        textP = textBar;
+                            bb.bar.setTitle(textBar.toString());
+                        config.set(progressbartext, textBar.toString());
+                        textP = textBar.toString();
                         if (papi)
                             for (Player ponl : Bukkit.getOnlinePlayers())
                                 pInf.get(getID(ponl.getName())).bar
-                                        .setTitle(PlaceholderAPI.setPlaceholders(ponl, textBar));
+                                        .setTitle(PlaceholderAPI.setPlaceholders(ponl, textBar.toString()));
                         return true;
                     }
                     sender.sendMessage(String.format("%strue, false, settext or level only!", ChatColor.RED));
