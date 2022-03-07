@@ -236,12 +236,14 @@ public class Oneblock extends JavaPlugin {
                 return;
         Invitation tempinv = new Invitation(name, to);
         invite.add(tempinv);
-        Bukkit.getScheduler().runTaskLaterAsynchronously(this, new Runnable() {
+        class InviteDelete implements Runnable {
             @Override
             public void run() {
                 invite.remove(tempinv);
             }
-        }, 300L);
+        }
+
+        Bukkit.getScheduler().runTaskLaterAsynchronously(this, new InviteDelete(), 300L);
     }
 
     public boolean checkinvite(Player pl) {
