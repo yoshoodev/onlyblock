@@ -40,6 +40,7 @@ import org.bukkit.event.player.PlayerRespawnEvent;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.inventory.Inventory;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 public class Oneblock extends JavaPlugin {
     boolean on = false;
@@ -403,7 +404,7 @@ public class Oneblock extends JavaPlugin {
     }
 
     @Override
-    public boolean onCommand(CommandSender sender, Command cmd, String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, Command cmd, @NotNull String label, String[] args) {
         if (cmd.getName().equalsIgnoreCase("oneblock")) {
             //
             if (args.length == 0)
@@ -495,7 +496,7 @@ public class Oneblock extends JavaPlugin {
                     y = l.getBlockY();
                     z = l.getBlockZ();
                     world = l.getWorld();
-                    int temp = 100;
+                    int temp;
                     if (args.length >= 2) {
                         try {
                             temp = Integer.parseInt(args[1]);
@@ -547,19 +548,19 @@ public class Oneblock extends JavaPlugin {
                     }
                     Player inv = Bukkit.getPlayer(args[1]);
                     if (inv != null) {
-                        if (inv == (Player) sender) {
+                        if (inv == sender) {
                             sender.sendMessage(String.format("%sYou can't invite yourself.", ChatColor.YELLOW));
                             return true;
                         }
-                        if (!existID(((Player) sender).getName())) {
+                        if (!existID(sender.getName())) {
                             sender.sendMessage(
                                     String.format("%sPlease create a customisland before you do this.",
                                             ChatColor.YELLOW));
                             return true;
                         }
-                        addinvite(((Player) sender).getName(), inv.getName());
+                        addinvite(sender.getName(), inv.getName());
                         inv.sendMessage(String.format("%sYou were invited by player %s.%n%s/ob accept to accept).",
-                                ChatColor.GREEN, ((Player) sender).getName(), ChatColor.RED));
+                                ChatColor.GREEN, sender.getName(), ChatColor.RED));
                         sender.sendMessage(String.format("%sSuccesfully invited %s.", ChatColor.GREEN, inv.getName()));
                     }
                     return true;
@@ -570,11 +571,11 @@ public class Oneblock extends JavaPlugin {
                         return true;
                     }
                     Player inv = Bukkit.getPlayer(args[1]);
-                    String name = ((Player) sender).getName();
+                    String name = sender.getName();
                     if (!checkInvalidID(name))
                         return true;
                     if (inv != null) {
-                        if (inv == (Player) sender) {
+                        if (inv == sender) {
                             sender.sendMessage(String.format("%sYou can't kick yourself.", ChatColor.YELLOW));
                             return true;
                         }
@@ -633,7 +634,7 @@ public class Oneblock extends JavaPlugin {
                     }
                     if (args.length > 1 &&
                             (args[1].equals("true") || args[1].equals("false"))) {
-                        protection = Boolean.valueOf(args[1]);
+                        protection = Boolean.parseBoolean(args[1]);
                         config.set("protection", protection);
                     } else
                         sender.sendMessage(String.format("%senter a valid value true or false", ChatColor.YELLOW));
@@ -659,7 +660,7 @@ public class Oneblock extends JavaPlugin {
                     }
                     if (args.length > 1 &&
                             (args[1].equals("true") || args[1].equals("false"))) {
-                        worldGuard = Boolean.valueOf(args[1]);
+                        worldGuard = Boolean.parseBoolean(args[1]);
                         config.set(wgph, worldGuard);
                         if (worldGuard)
                             recreateworldGuard();
@@ -678,7 +679,7 @@ public class Oneblock extends JavaPlugin {
                     }
                     if (args.length > 1 &&
                             (args[1].equals("true") || args[1].equals("false"))) {
-                        autojoin = Boolean.valueOf(args[1]);
+                        autojoin = Boolean.parseBoolean(args[1]);
                         config.set("autojoin", autojoin);
                     } else
                         sender.sendMessage(String.format("%senter a valid value true or false", ChatColor.YELLOW));
@@ -698,7 +699,7 @@ public class Oneblock extends JavaPlugin {
                         return true;
                     }
                     if (existID(args[1])) {
-                        int setlvl = 0;
+                        int setlvl;
                         try {
                             setlvl = Integer.parseInt(args[2]);
                         } catch (NumberFormatException nfe) {
@@ -759,7 +760,7 @@ public class Oneblock extends JavaPlugin {
                     sender.sendMessage(String.format("%sa player named %s was not found.", ChatColor.RED, args[1]));
                     return true;
                 }
-                case ("levelMultiplier"): {
+                case ("levelmultiplier"): {
                     if (!sender.hasPermission(permissionSet)) {
                         sender.sendMessage(noperm);
                         return true;
@@ -802,7 +803,7 @@ public class Oneblock extends JavaPlugin {
                         return true;
                     }
                     if (args[1].equals("true") || args[1].equals("false")) {
-                        progressBar = Boolean.valueOf(args[1]);
+                        progressBar = Boolean.parseBoolean(args[1]);
                         if (progressBar) {
                             if (progressBarColor == null)
                                 progressBarColor = BarColor.GREEN;
@@ -845,21 +846,20 @@ public class Oneblock extends JavaPlugin {
                                 else
                                     curPlayer.bar.setTitle(levels.get(curPlayer.lvl).name);
                             config.set(progressbartext, "level");
-                            return true;
                         } else {
                             levelBarMode = false;
                             for (PlayerInfo bb : pInf)
                                 bb.bar.setTitle("Progress bar");
                             config.set(progressbartext, "Progress bar");
-                            return true;
                         }
+                        return true;
                     }
                     if (args[1].equalsIgnoreCase("settext")) {
                         if (!progressBar)
                             return true;
                         StringBuilder textBar = new StringBuilder();
                         for (int i = 2; i < args.length - 1; i++)
-                            textBar.append(args[i] + " ");
+                            textBar.append(args[i]).append(" ");
                         textBar.append(args[args.length - 1]);
                         levelBarMode = false;
                         for (PlayerInfo bb : pInf)
@@ -881,7 +881,7 @@ public class Oneblock extends JavaPlugin {
                         return true;
                     }
                     if (args.length >= 2) {
-                        int temp = 0;
+                        int temp;
                         try {
                             temp = Integer.parseInt(args[1]);
                         } catch (NumberFormatException nfe) {
@@ -967,7 +967,7 @@ public class Oneblock extends JavaPlugin {
                         sender.sendMessage(ChatColor.YELLOW + "enter a valid value (4 to 20)\n7 by default");
                         return true;
                     }
-                    Long frequencytemp;
+                    long frequencytemp;
                     String frequencyName = "";
                     try {
                         frequencytemp = Long.parseLong(args[1]);
@@ -1008,7 +1008,7 @@ public class Oneblock extends JavaPlugin {
                         return true;
                     }
                     if (args[1].equals("true") || args[1].equals("false")) {
-                        il3x3 = Boolean.valueOf(args[1]);
+                        il3x3 = Boolean.parseBoolean(args[1]);
                         config.set("Island_for_new_players", il3x3);
                         sender.sendMessage(ChatColor.GREEN + "Island_for_new_players = " + il3x3);
                         return true;
@@ -1058,7 +1058,7 @@ public class Oneblock extends JavaPlugin {
                         return true;
                     }
                     if (args[1].equals("true") || args[1].equals("false")) {
-                        rebirth = Boolean.valueOf(args[1]);
+                        rebirth = Boolean.parseBoolean(args[1]);
                         config.set("Rebirth_on_the_island", rebirth);
                         sender.sendMessage(ChatColor.GREEN + "Rebirth_on_the_island = " + rebirth);
                         return true;
@@ -1139,9 +1139,7 @@ public class Oneblock extends JavaPlugin {
     }
 
     private void recreateworldGuard() {
-        if (!worldGuard || !obCanUse) {
-            return;
-        } else {
+        if (worldGuard || obCanUse) {
             obWorldGuard.RemoveRegions(id);
             for (int i = 0; i < id; i++) {
                 PlayerInfo owner = pInf.get(i);
@@ -1155,9 +1153,7 @@ public class Oneblock extends JavaPlugin {
                 for (String member : owner.nicks)
                     obWorldGuard.addMember(member, i);
             }
-
         }
-
     }
 
     public void saveData() {
@@ -1232,7 +1228,7 @@ public class Oneblock extends JavaPlugin {
             if (!XMaterial.matchXMaterial(list).isPresent())
                 flowers.add(grass);
             else {
-                XMaterial temp = null;
+                XMaterial temp;
                 if (XMaterial.matchXMaterial(list).isPresent()) {
                     temp = XMaterial.matchXMaterial(list).get();
                     flowers.add(temp);
@@ -1281,7 +1277,6 @@ public class Oneblock extends JavaPlugin {
             recreateworldGuard();
         }
         id = pInf.size();
-        return;
     }
 
     private void configFile() {
@@ -1429,12 +1424,12 @@ public class Oneblock extends JavaPlugin {
         if (pInf.size() <= i)
             return new PlayerInfo();
         ArrayList<PlayerInfo> ppii = (ArrayList<PlayerInfo>) pInf.clone();
-        Collections.sort(ppii, PlayerInfo.COMPARE_BY_LVL);
+        ppii.sort(PlayerInfo.COMPARE_BY_LVL);
         return ppii.get(i);
     }
 
     @Override
-    public List<String> onTabComplete(CommandSender sender, Command cmd, String label, String[] args) {
+    public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
         List<String> commands = new ArrayList<>();
 
         if (args.length == 1) {
