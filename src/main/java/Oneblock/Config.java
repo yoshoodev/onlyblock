@@ -30,10 +30,9 @@ public class Config {
 					String line;
 
 					ArrayList<String> inputStr1 = new ArrayList<>();
-					ArrayList<String> inputStr2 = new ArrayList<>();
 					while ((line = fileIn.readLine()) != null)
 						inputStr1.add(line);
-					inputStr2.addAll(Arrays.asList(fc.saveToString().split("\n")));
+					ArrayList<String> inputStr2 = new ArrayList<>(Arrays.asList(fc.saveToString().split("\n")));
 
 					int i = 0;
 					for (String a : inputStr1) {

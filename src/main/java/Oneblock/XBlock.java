@@ -130,7 +130,7 @@ public final class XBlock {
     }
 
     public static boolean setType(@Nonnull Block block, @Nullable Object material_) {
-        XMaterial material = null;
+        XMaterial material;
         if (material_.getClass() == XMaterial.class)
             material = (XMaterial) material_;
         else
@@ -276,13 +276,11 @@ public final class XBlock {
      * Note that this method assumes that you've already tried doing
      * {@link XMaterial#matchXMaterial(Material)} using
      * {@link Block#getType()} and compared it with the other XMaterial. If not, use
-     * {@link #isSimilar(Block, XMaterial)}
      *
      * @param block    the block to check.
      * @param material the XMaterial similar to this block type.
      *
      * @return true if the raw block type matches with the material.
-     * @see #isSimilar(Block, XMaterial)
      */
     public static boolean isType(Block block, XMaterial material) {
         Material mat = block.getType();
@@ -369,7 +367,7 @@ public final class XBlock {
         }
 
         private enum Handling {
-            COLORABLE, WOOD_SPECIES;
+            COLORABLE, WOOD_SPECIES
         }
     }
 

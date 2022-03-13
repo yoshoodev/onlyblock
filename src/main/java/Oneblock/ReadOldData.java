@@ -9,13 +9,12 @@ import org.bukkit.configuration.file.YamlConfiguration;
 
 public class ReadOldData {
 	public static ArrayList<PlayerInfo> Read(File f) {
-		ArrayList<PlayerInfo> infs = new ArrayList<PlayerInfo>();
-		ArrayList<String> nicks = new ArrayList<String>();
+		ArrayList<PlayerInfo> infs = new ArrayList<>();
+		ArrayList<String> nicks = new ArrayList<>();
 		if (!f.exists())
 			return infs;
 
 		try (FileReader fileReader = new FileReader(f)) {
-			@SuppressWarnings("resource")
 			BufferedReader fileIn = new BufferedReader(new FileReader(f));
 			String line;
 			while ((line = fileIn.readLine()) != null)

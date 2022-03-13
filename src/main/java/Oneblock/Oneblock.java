@@ -121,7 +121,7 @@ public class Oneblock extends JavaPlugin {
 
     // PERMISSIONS VARIABLES
     static String permissionSet = "Oneblock.set";
-    String noperm = String.format("%sYou don't have permission [Oneblock.set].", ChatColor.RED);
+    String noPermission = String.format("%sYou don't have permission [Oneblock.set].", ChatColor.RED);
 
     // --|PLUGIN STARTUP|--
     @Override
@@ -229,11 +229,11 @@ public class Oneblock extends JavaPlugin {
         }
     }
 
-    public void addinvite(String name, String to) {
+    public void addInvite(String from, String to) {
         for (Invitation item : invite)
-            if (item.equals(name, to))
+            if (item.equals(from, to))
                 return;
-        Invitation tempinv = new Invitation(name, to);
+        Invitation tempinv = new Invitation(from, to);
         invite.add(tempinv);
         class InviteDelete implements Runnable {
             @Override
@@ -245,23 +245,21 @@ public class Oneblock extends JavaPlugin {
         Bukkit.getScheduler().runTaskLaterAsynchronously(this, new InviteDelete(), 300L);
     }
 
-    public boolean checkinvite(Player pl) {
-        String name = pl.getName();
+    public boolean checkInvite(Player player) {
+        String name = player.getName();
         Invitation tempinv = null;
         for (Invitation item : invite)
             if (item.Invited.equals(name))
                 tempinv = item;
-
         if (tempinv == null || !existID(tempinv.Inviting))
             return false;
-
         if (existID(name)) {
             if (progressBar)
-                pInf.get(getID(name)).bar.removePlayer(pl);
-            pl.performCommand("ob idreset /n");
+                pInf.get(getID(name)).bar.removePlayer(player);
+            player.performCommand("oneblock idreset /n");
         }
         pInf.get(getID(tempinv.Inviting)).nicks.add(name);
-        pl.performCommand("ob j");
+        player.performCommand("oneblock join");
         invite.remove(tempinv);
         return true;
     }
@@ -402,7 +400,7 @@ public class Oneblock extends JavaPlugin {
     }
 
     @Override
-    public boolean onCommand(@NotNull CommandSender sender, Command cmd, @NotNull String label, String[] args) {
+    public boolean onCommand(@NotNull CommandSender sender, Command cmd, @NotNull String label, String[] args)  {
         if (cmd.getName().equalsIgnoreCase("oneblock")) {
             //
             if (args.length == 0)
@@ -421,8 +419,8 @@ public class Oneblock extends JavaPlugin {
                                 ChatColor.YELLOW));
                         return true;
                     }
-                    Player p = (Player) sender;
-                    String name = p.getName();
+                    Player player = (Player) sender;
+                    String name = player.getName();
                     if (!existID(name)) {
                         if (il3x3) {
                             if (customisland != null) {
@@ -456,7 +454,7 @@ public class Oneblock extends JavaPlugin {
                             if (levelBarMode)
                                 temp = levels.get(0).name;
                             else if (papi)
-                                temp = PlaceholderAPI.setPlaceholders(p, textP);
+                                temp = PlaceholderAPI.setPlaceholders(player, textP);
                             curPlayer.bar = (Bukkit.createBossBar(temp, levels.get(0).color, BarStyle.SEGMENTED_10,
                                     BarFlag.DARKEN_SKY));
                         }
@@ -467,7 +465,7 @@ public class Oneblock extends JavaPlugin {
                     }
                     if (progressBar)
                         pInf.get(getID(name)).bar.setVisible(true);
-                    p.teleport(new Location(world, x + getID(name) * space + 0.5, y + 1.2, z + 0.5));
+                    player.teleport(new Location(world, x + getID(name) * space + 0.5, y + 1.2, z + 0.5));
                     if (worldGuard && obCanUse) {
                         obWorldGuard.addMember(name, getID(name));
                     }
@@ -485,7 +483,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("set"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     Player p = (Player) sender;
@@ -523,7 +521,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("setleave"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     Player p = (Player) sender;
@@ -562,7 +560,7 @@ public class Oneblock extends JavaPlugin {
                                             ChatColor.YELLOW));
                             return true;
                         }
-                        addinvite(sender.getName(), inv.getName());
+                        addInvite(sender.getName(), inv.getName());
                         inv.sendMessage(String.format("%sYou were invited by player %s.%n%s/ob accept to accept).",
                                 ChatColor.GREEN, sender.getName(), ChatColor.RED));
                         sender.sendMessage(String.format("%sSuccesfully invited %s.", ChatColor.GREEN, inv.getName()));
@@ -598,7 +596,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("accept"): {
                     Player pl = (Player) sender;
-                    if (checkinvite(pl))
+                    if (checkInvite(pl))
                         sender.sendMessage(String.format("%sSuccesfully accepted the invitation.", ChatColor.GREEN));
                     else
                         sender.sendMessage(
@@ -633,7 +631,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("protection"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     if (args.length > 1 &&
@@ -648,7 +646,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("worldguard"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     if (!Bukkit.getPluginManager().isPluginEnabled(wgph)) {
@@ -678,7 +676,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("autojoin"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     if (args.length > 1 &&
@@ -694,7 +692,7 @@ public class Oneblock extends JavaPlugin {
                 // LVL
                 case ("setlevel"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     if (args.length <= 2) {
@@ -734,7 +732,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("clear"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     if (args.length <= 1) {
@@ -766,7 +764,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("levelmultiplier"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     if (args.length <= 1) {
@@ -794,7 +792,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("progressbarph"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     if (superlegacy) {
@@ -881,7 +879,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("listlvl"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     if (args.length >= 2) {
@@ -915,7 +913,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("reload"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     if (args.length == 1) {
@@ -953,7 +951,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("chatalert"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     chatAlert = !chatAlert;
@@ -964,7 +962,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("frequency"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     if (args.length == 1) {
@@ -1004,7 +1002,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("islands"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     if (args.length == 1) {
@@ -1054,7 +1052,7 @@ public class Oneblock extends JavaPlugin {
                 }
                 case ("island_rebirth"): {
                     if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noperm);
+                        sender.sendMessage(noPermission);
                         return true;
                     }
                     if (args.length == 1) {
@@ -1075,14 +1073,14 @@ public class Oneblock extends JavaPlugin {
                     boolean admin = sender.hasPermission(permissionSet);
                     if (admin)
                         sender.sendMessage(ChatColor.GRAY + "/ob set" + ChatColor.WHITE
-                                + " - sets the location of the first customisland.");
+                                + " - sets the location of the first Island.");
                     sender.sendMessage(
-                            ChatColor.GRAY + "/ob j" + ChatColor.WHITE + " - join a new one or your own customisland.");
+                            ChatColor.GRAY + "/ob j" + ChatColor.WHITE + " - join a new one or your own Island.");
                     if (admin)
                         sender.sendMessage(ChatColor.GRAY + "/ob protection" + ChatColor.WHITE
-                                + " - does not allow players to leave their customisland.");
+                                + " - does not allow players to leave their Island.");
                     sender.sendMessage(ChatColor.GRAY + "/ob invite 'playername'" + ChatColor.WHITE
-                            + " - an invitation to the customisland.\n" +
+                            + " - an invitation to the Island.\n" +
                             ChatColor.GRAY + "/ob accept" + ChatColor.WHITE + " - to accept an invitation.");
                     if (admin) {
                         sender.sendMessage(ChatColor.GRAY + "/ob islands true" + ChatColor.WHITE

@@ -2,6 +2,7 @@ package Oneblock;
 
 import me.clip.placeholderapi.expansion.PlaceholderExpansion;
 import org.bukkit.entity.Player;
+import org.jetbrains.annotations.NotNull;
 
 public class OBP extends PlaceholderExpansion {
     @Override
@@ -10,22 +11,18 @@ public class OBP extends PlaceholderExpansion {
     }
 
     @Override
-    public String getAuthor() {
+    public @NotNull String getAuthor() {
         return "YoshooDev";
     }
 
     @Override
-    public String getIdentifier() {
+    public @NotNull String getIdentifier() {
         return "OB";
     }
 
-    @Override
-    public String getPlugin() {
-        return null;
-    }
 
     @Override
-    public String getVersion() {
+    public @NotNull String getVersion() {
         return "0.0.1";
     }
 

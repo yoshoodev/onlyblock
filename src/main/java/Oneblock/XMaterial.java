@@ -34,6 +34,7 @@ import org.apache.commons.lang.WordUtils;
 import org.bukkit.Bukkit;
 import org.bukkit.Material;
 import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.NotNull;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
@@ -1438,7 +1439,7 @@ public enum XMaterial {
             .expireAfterAccess(3, TimeUnit.HOURS)
             .build(new CacheLoader<String, Pattern>() {
                 @Override
-                public Pattern load(@Nonnull String str) {
+                public @NotNull Pattern load(@Nonnull String str) {
                     try {
                         return Pattern.compile(str);
                     } catch (PatternSyntaxException ex) {

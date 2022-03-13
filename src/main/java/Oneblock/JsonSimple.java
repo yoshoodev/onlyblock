@@ -27,8 +27,7 @@ public class JsonSimple {
 			user.put("breaks", pl.breaks);
 
 			JSONArray arr = new JSONArray();
-			for (String us : pl.nicks)
-				arr.add(us);
+			arr.addAll(pl.nicks);
 			user.put("invated", arr);
 			main.put(i, user);
 		}
@@ -52,7 +51,7 @@ public class JsonSimple {
 		} catch (Exception e) {
 		}
 
-		ArrayList<PlayerInfo> infs = new ArrayList<PlayerInfo>();
+		ArrayList<PlayerInfo> infs = new ArrayList<>();
 		if (main == null)
 			return infs;
 		PlayerInfo nullable = new PlayerInfo();
@@ -69,8 +68,7 @@ public class JsonSimple {
 			pl.lvl = ((Number) user.get("lvl")).intValue();
 			pl.breaks = ((Number) user.get("breaks")).intValue();
 			JSONArray arr = (JSONArray) user.get("invated");
-			for (int q = 0; q < arr.size(); q++)
-				pl.nicks.add((String) arr.get(q));
+			for (Object o : arr) pl.nicks.add((String) o);
 			infs.add(pl);
 		}
 		return infs;
