@@ -1,12 +1,12 @@
 # Configuration of levels.
-# by MrMarL & Adarsh A
+# by Yoshoo
 MaxLevel: 'Level: MAX'
 '0':
 - 'Level: 0 - Grass starter'
 - GREEN
 - GRASS_BLOCK
 '1':
-- 'Level: 1 - Podzol & melon'
+- 'Level: 1 - Mud & melon'
 - PODZOL
 - GRASS_BLOCK
 - MELON_BLOCK

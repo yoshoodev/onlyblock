@@ -2,7 +2,7 @@ name: Oneblock
 main: Oneblock.Oneblock
 version: 0.0.1
 api-version: 1.13
-author: YoshooDev
+author: Yoshoo
 softdepend: [PlaceholderAPI, WorldGuard]
 commands:
   oneblock:
@@ -10,6 +10,7 @@ commands:
     aliases: ob
     usage: /ob join
   ob j:
+    description: Join.
   ob ver:
     description: Version.
 permissions:

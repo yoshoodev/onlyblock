@@ -1,6 +1,7 @@
 // Copyright © 2022 MrMarL. All rights reserved.
 package Oneblock;
 
+import org.bukkit.command.ConsoleCommandSender;
 import org.bukkit.plugin.java.JavaPlugin;
 import org.bukkit.util.Vector;
 
@@ -37,6 +38,7 @@ import org.bukkit.inventory.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public class Oneblock extends JavaPlugin {
+    // PLUGIN ENABLED ?
     boolean on = false;
 
     // RANDOM
@@ -63,14 +65,14 @@ public class Oneblock extends JavaPlugin {
 
     // CONFIG VALUES
     boolean il3x3 = false;
-    boolean rebirth = false;
-    boolean autojoin = false;
-    boolean levelBarMode = false;
-    boolean chatAlert = false;
-    boolean protection = false;
-    boolean papi = false;
-    boolean worldGuard = false;
-    boolean progressBar = true;
+    boolean rebirthEnabled = false;
+    boolean autojoinEnabled = false;
+    boolean levelBarModeEnabled = false;
+    boolean chatAlertEnabled = false;
+    boolean protectionEnabled = false;
+    boolean papiEnabled = false;
+    boolean worldGuardEnabled = false;
+    boolean progressBarEnabled = true;
 
     // VERSION
     boolean superlegacy;
@@ -89,39 +91,75 @@ public class Oneblock extends JavaPlugin {
     static int levelMultiplier = 5;
     String textP = "";
     int space = 100;
-    Long frequency;
+    Long frequencyValue;
     BarColor progressBarColor;
     BlockData[][][] customisland = null;
-    ArrayList<Invitation> invite = new ArrayList<>();
+    ArrayList<Invitation> invitations = new ArrayList<>();
 
     // WORLDGUARD
     OBWorldGuard obWorldGuard;
     boolean obCanUse = false;
 
     // MATERIALS
-    XMaterial grassBlock = XMaterial.GRASS_BLOCK;
-    XMaterial grass = XMaterial.GRASS;
+    static final XMaterial grassBlock = XMaterial.GRASS_BLOCK;
+    static final XMaterial grass = XMaterial.GRASS;
 
     // CONFIG FILE ASSIGNMENTS
-    static String wgph = "worldGuard";
-    static String yl = "yleave";
-    static String worldph = "world";
-    static String lworldph = "leaveworld";
-    static String progressbarph = "progressBar";
-    static String progressbartext = "progressBar_text";
+    public static final String WORLD_GUARD = "worldGuard";
+    public static final String X_LEAVE = "xleave";
+    public static final String Y_LEAVE = "yleave";
+    public static final String Z_LEAVE = "zleave";
+    public static final String DEFAULT_WORLD = "world";
+    public static final String LEAVE_WORLD = "leaveworld";
+    public static final String PROGRESS_BAR = "progressBar";
+    public static final String PROGRESS_BAR_TEXT = "progressBar_text";
+    public static final String ONEBLOCK_JOIN = "oneblock join";
 
     // FILE NAME ASSIGNMENTS
-    static String blocksfile = "blocks.yml";
-    static String flowerfile = "flowers.yml";
-    static String mobfile = "mobs.yml";
-    static String configfile = "config.yml";
-    static String levelsfile = "levels.yml";
-    static String chestfile = "chests.yml";
-    static String playerDF = "playerData.json";
+    public static final String BLOCKS_YML = "blocks.yml";
+    public static final String FLOWERS_YML = "flowers.yml";
+    public static final String MOBS_YML = "mobs.yml";
+    public static final String CONFIG_YML = "config.yml";
+    public static final String LEVELS_YML = "levels.yml";
+    public static final String CHESTS_YML = "chests.yml";
+    public static final String PLAYER_DATA_JSON = "playerData.json";
 
     // PERMISSIONS VARIABLES
     static String permissionSet = "Oneblock.set";
-    String noPermission = String.format("%sYou don't have permission [Oneblock.set].", ChatColor.RED);
+
+    //    LEAVE VARIABLES CONSTANTS (UNKNOWN USE TO ME)
+    public static final String XLEAF = "xleaf";
+    public static final String YLEAF = "yleaf";
+    public static final String ZLEAF = "zleaf";
+    public static final String LEAFWORLD = "leafworld";
+
+    //    COMMAND ARGUMENTS
+    public static final String FREQUENCY = "frequency";
+    public static final String PROTECTION = "protection";
+    public static final String INVITE = "invite";
+    public static final String SETLEVEL = "setlevel";
+    public static final String SET_TEXT = "settext";
+    public static final String RELOAD = "reload";
+    public static final String LISTLVL = "listlvl";
+    public static final String CHAT_ALERT = "chatAlert";
+    public static final String CUSTOM_ISLAND = "custom_island";
+    public static final String AUTOJOIN = "autojoin";
+    public static final String ISLANDS = "islands";
+    public static final String
+            ISLAND_REBIRTH = "island_rebirth";
+    public static final String CLEAR = "clear";
+    public static final String LEVEL = "level";
+    public static final String COLOR = "color";
+
+    //    COMMAND ARGUMENTS BOOLEANS
+    public static final String FALSE = "false";
+    public static final String TRUE = "true";
+
+    //    STRINGS
+    public static final String TRUE_OR_FALSE = "enter a valid value true or false";
+    public static final String NO_PERMISSION_OBSET = String.format("%sYou don't have permission [Oneblock.set].", ChatColor.RED);
+    public static final String ENABLED = "enabled.";
+    public static final String DISABLED = "disabled.";
 
     // --|PLUGIN STARTUP|--
     @Override
@@ -130,12 +168,12 @@ public class Oneblock extends JavaPlugin {
         superlegacy = !XMaterial.supports(9);// Is version 1.9 supported?
         legacy = !XMaterial.supports(13);// Is version 1.13 supported?
         if (Bukkit.getPluginManager().isPluginEnabled("PlaceholderAPI")) {
-            papi = true;
+            papiEnabled = true;
             new OBP().register();
             Bukkit.getConsoleSender().sendMessage("[OnlyBlock] PlaceholderAPI has been found!");
         }
-        if (Bukkit.getPluginManager().isPluginEnabled(wgph)) {
-            worldGuard = true;
+        if (Bukkit.getPluginManager().isPluginEnabled(WORLD_GUARD)) {
+            worldGuardEnabled = true;
             Bukkit.getConsoleSender().sendMessage("[OnlyBlock] WorldGuard has been found!");
         }
         // Begin loading config files
@@ -145,13 +183,13 @@ public class Oneblock extends JavaPlugin {
         flowerFile();
         chestFile();
         mobFile();
-        // Check if /ob set was called by checking y value in config.yml
+        // Check if "/ob set" was called by checking y value in config.yml
         if (config.getDouble("y") != 0) { // IF y!=0 then enable plugin
-            // IF world is null or exit world is null call world_null_gen
-            if (world == null || (config.getDouble(yl) != 0 && leaveworld == null)) {
+            //  IF the world is null or exit world is null call world_null_gen
+            if (world == null || (config.getDouble(Y_LEAVE) != 0 && leaveworld == null)) {
                 Bukkit.getScheduler().runTaskTimer(this, new NullWorld(), 32, 64);
             } else {
-                Bukkit.getScheduler().runTaskTimer(this, new Task(), frequency, frequency * 2);
+                Bukkit.getScheduler().runTaskTimer(this, new Task(), frequencyValue, frequencyValue * 2);
                 on = true;
             }
         }
@@ -161,7 +199,7 @@ public class Oneblock extends JavaPlugin {
     public class RespawnAutoJoin implements Listener {
         @EventHandler
         public void respawn(PlayerRespawnEvent e) {
-            if (rebirth && e.getPlayer().getWorld().equals(world) && existID(e.getPlayer().getName()))
+            if (rebirthEnabled && e.getPlayer().getWorld().equals(world) && existID(e.getPlayer().getName()))
                 e.setRespawnLocation(
                         new Location(world, x + getID(e.getPlayer().getName()) * space + 0.5, y + 1.2,
                                 z + 0.5));
@@ -169,7 +207,7 @@ public class Oneblock extends JavaPlugin {
 
         @EventHandler
         public void teleport(PlayerTeleportEvent e) {
-            if (autojoin) {
+            if (autojoinEnabled) {
                 Location loc = e.getTo();
                 World from = e.getFrom().getWorld();
                 assert loc != null;
@@ -178,7 +216,7 @@ public class Oneblock extends JavaPlugin {
                     if (from != null && !from.equals(world) && to.equals(world) &&
                             !(loc.getY() == y + 1.2 && loc.getZ() == z + 0.5)) {
                         e.setCancelled(true);
-                        e.getPlayer().performCommand("oneblock join");
+                        e.getPlayer().performCommand(ONEBLOCK_JOIN);
                     }
                 }
 
@@ -187,10 +225,10 @@ public class Oneblock extends JavaPlugin {
 
         @EventHandler
         public void join(PlayerJoinEvent e) {
-            if (autojoin) {
+            if (autojoinEnabled) {
                 Player pl = e.getPlayer();
                 if (pl.getWorld().equals(world))
-                    pl.performCommand("oneblock join");
+                    pl.performCommand(ONEBLOCK_JOIN);
             }
         }
     }
@@ -212,8 +250,8 @@ public class Oneblock extends JavaPlugin {
                         "[OB] WORLD INITIALIZATION ERROR! world = null",
                         "[OB] Trying to initialize the world again...");
                 Bukkit.getLogger().info(msg);
-                world = Bukkit.getWorld(Objects.requireNonNull(config.getString(worldph)));
-                leaveworld = Bukkit.getWorld(Objects.requireNonNull(config.getString(lworldph)));
+                world = Bukkit.getWorld(Objects.requireNonNull(config.getString(DEFAULT_WORLD)));
+                leaveworld = Bukkit.getWorld(Objects.requireNonNull(config.getString(LEAVE_WORLD)));
             } else {
                 Bukkit.getLogger().info("[OB] The initialization of the world was successful!");
                 worldInit();
@@ -224,21 +262,21 @@ public class Oneblock extends JavaPlugin {
     public void worldInit() {
         Bukkit.getScheduler().cancelTasks(this);
         if (config.getDouble("y") != 0) {
-            Bukkit.getScheduler().runTaskTimer(this, new Task(), frequency, frequency * 2);
+            Bukkit.getScheduler().runTaskTimer(this, new Task(), frequencyValue, frequencyValue * 2);
             on = true;
         }
     }
 
     public void addInvite(String from, String to) {
-        for (Invitation item : invite)
+        for (Invitation item : invitations)
             if (item.equals(from, to))
                 return;
-        Invitation tempinv = new Invitation(from, to);
-        invite.add(tempinv);
+        Invitation tempInvite = new Invitation(from, to);
+        invitations.add(tempInvite);
         class InviteDelete implements Runnable {
             @Override
             public void run() {
-                invite.remove(tempinv);
+                invitations.remove(tempInvite);
             }
         }
 
@@ -248,29 +286,29 @@ public class Oneblock extends JavaPlugin {
     public boolean checkInvite(Player player) {
         String name = player.getName();
         Invitation tempinv = null;
-        for (Invitation item : invite)
+        for (Invitation item : invitations)
             if (item.Invited.equals(name))
                 tempinv = item;
         if (tempinv == null || !existID(tempinv.Inviting))
             return false;
         if (existID(name)) {
-            if (progressBar)
+            if (progressBarEnabled)
                 pInf.get(getID(name)).bar.removePlayer(player);
             player.performCommand("oneblock idreset /n");
         }
         pInf.get(getID(tempinv.Inviting)).nicks.add(name);
-        player.performCommand("oneblock join");
-        invite.remove(tempinv);
+        player.performCommand(ONEBLOCK_JOIN);
+        invitations.remove(tempinv);
         return true;
     }
 
     public class Task implements Runnable {
         public void protect(Player ponl, int obpX) {
-            if (protection && !ponl.hasPermission("Oneblock.ignoreBarrier")) {
+            if (protectionEnabled && !ponl.hasPermission("Oneblock.ignoreBarrier")) {
                 int check = ponl.getLocation().getBlockX() - obpX - x;
                 if (check > 50 || check < -50) {
                     if (check > 200 || check < -200) {
-                        ponl.performCommand("oneblock join");
+                        ponl.performCommand(ONEBLOCK_JOIN);
                         return;
                     }
                     ponl.setVelocity(new Vector(-check / 30, 0, 0));
@@ -281,7 +319,9 @@ public class Oneblock extends JavaPlugin {
         }
 
         public void run() {
-            online = world.getPlayers();
+            synchronized (this) {
+                online = world.getPlayers();
+            }
             Collections.shuffle(online);
             for (Player ponl : online) {
                 String name = ponl.getName();
@@ -290,7 +330,7 @@ public class Oneblock extends JavaPlugin {
                 int obid = getID(name);
                 int obpX = obid * space;
 
-                // check for player exiting his customisland
+                // check for player exiting his Island
                 protect(ponl, obpX);
 
                 Block block = world.getBlockAt(x + obpX, y, z);
@@ -305,16 +345,16 @@ public class Oneblock extends JavaPlugin {
                         curMaxLevel = maxlevel;
                         if (curPlayer.lvl < levels.size())
                             curMaxLevel = levels.get(curPlayer.lvl);
-                        if (progressBar) {
+                        if (progressBarEnabled) {
                             curPlayer.bar.setColor(curMaxLevel.color);
-                            if (levelBarMode)
+                            if (levelBarModeEnabled)
                                 curPlayer.bar.setTitle(curMaxLevel.name);
                         }
-                        if (chatAlert)
+                        if (chatAlertEnabled)
                             ponl.sendMessage(String.format("%s%s", ChatColor.GREEN, curMaxLevel.name));
                     }
-                    if (progressBar) {
-                        if (!levelBarMode && papi)
+                    if (progressBarEnabled) {
+                        if (!levelBarModeEnabled && papiEnabled)
                             curPlayer.bar.setTitle(PlaceholderAPI.setPlaceholders(ponl, textP));
                         curPlayer.bar.setProgress((double) curPlayer.breaks / (16 + curPlayer.lvl * levelMultiplier));
                         curPlayer.bar.addPlayer(ponl);
@@ -393,7 +433,7 @@ public class Oneblock extends JavaPlugin {
                         yNow.add(customisland[xx][yy][zz].getAsString());
                 map.put(String.format("y%d", yy), yNow);
             }
-            config.set("custom_island", map);
+            config.set(CUSTOM_ISLAND, map);
         }
         saveData();
         Config.Save(config);
@@ -403,711 +443,724 @@ public class Oneblock extends JavaPlugin {
     public boolean onCommand(@NotNull CommandSender sender, Command cmd, @NotNull String label, String[] args)  {
         if (cmd.getName().equalsIgnoreCase("oneblock")) {
             //
-            if (args.length == 0)
-                return ((Player) sender).performCommand("ob j");
+            if (args.length == 0 && !(sender instanceof ConsoleCommandSender)){
+                ((Player) sender).performCommand(ONEBLOCK_JOIN);
+            } else if (sender instanceof ConsoleCommandSender && args.length == 0) {
+                sender.sendMessage("Console cannot send this command !");
+                return true;
+            }
 
             if (!sender.hasPermission("Oneblock.join")) {
                 sender.sendMessage(String.format("%sYou don't have permission [Oneblock.join].", ChatColor.RED));
                 return true;
             }
             //
-            switch (args[0].toLowerCase()) {
-                case ("j"):
-                case ("join"): {
-                    if (config.getInt("y") == 0 || world == null) {
-                        sender.sendMessage(String.format("%sFirst you need to set the reference coordinates '/ob set'.",
-                                ChatColor.YELLOW));
-                        return true;
-                    }
-                    Player player = (Player) sender;
-                    String name = player.getName();
-                    if (!existID(name)) {
-                        if (il3x3) {
-                            if (customisland != null) {
-                                int px = x + id * space - 3;
-                                for (int xx = 0; xx < 7; xx++)
-                                    for (int yy = 0; yy < 3; yy++)
-                                        for (int zz = 0; zz < 7; zz++)
-                                            world.getBlockAt(px + xx, y + yy, z - 3 + zz)
-                                                    .setBlockData(customisland[xx][yy][zz]);
-                            } else {
-                                for (int i = -2; i <= 2; i++)
-                                    for (int q = -2; q <= 2; q++)
-                                        if (Math.abs(i) + Math.abs(q) < 3)
-                                            XBlock.setType(world.getBlockAt(x + id * space + i, y, z + q), grassBlock);
+            if (args.length != 0) {
+                switch (args[0].toLowerCase()) {
+                    case ("j"):
+                    case ("join"): {
+                        Player player;
+                        if(sender instanceof ConsoleCommandSender){
+                            sender.sendMessage("Console cannot send this command !");
+                            return true;
+                        } else {player = (Player) sender;}
+                        if (config.getInt("y") == 0 || world == null) {
+                            sender.sendMessage(String.format("%sFirst you need to set the reference coordinates '/ob set'.",
+                                    ChatColor.YELLOW));
+                            return true;
+                        }
+                        String name = player.getName();
+                        if (!existID(name)) {
+                            if (il3x3) {
+                                if (customisland != null) {
+                                    int px = x + id * space - 3;
+                                    for (int xx = 0; xx < 7; xx++)
+                                        for (int yy = 0; yy < 3; yy++)
+                                            for (int zz = 0; zz < 7; zz++)
+                                                world.getBlockAt(px + xx, y + yy, z - 3 + zz)
+                                                        .setBlockData(customisland[xx][yy][zz]);
+                                } else {
+                                    for (int i = -2; i <= 2; i++)
+                                        for (int q = -2; q <= 2; q++)
+                                            if (Math.abs(i) + Math.abs(q) < 3)
+                                                XBlock.setType(world.getBlockAt(x + id * space + i, y, z + q), grassBlock);
+                                }
+                            }
+                            // worldGuard
+                            if (worldGuardEnabled && obCanUse) {
+                                int xWG = x + id * space;
+                                Vector block1 = new Vector(xWG - space / 2 + 1, 0, z - 100);
+                                Vector block2 = new Vector(xWG + space / 2 - 1, 255, z + 100);
+                                obWorldGuard.CreateRegion(name, block1, block2, id);
+                            }
+                            id++;
+                            saveData();
+                            PlayerInfo curPlayer = new PlayerInfo();
+                            pInf.add(curPlayer);
+                            curPlayer.nick = name;
+                            if (!superlegacy && progressBarEnabled) {
+                                String temp = textP;
+                                if (levelBarModeEnabled)
+                                    temp = levels.get(0).name;
+                                else if (papiEnabled)
+                                    temp = PlaceholderAPI.setPlaceholders(player, textP);
+                                curPlayer.bar = (Bukkit.createBossBar(temp, levels.get(0).color, BarStyle.SEGMENTED_10,
+                                        BarFlag.DARKEN_SKY));
                             }
                         }
-                        // worldGuard
-                        if (worldGuard && obCanUse) {
-                            int xWG = x + id * space;
-                            Vector block1 = new Vector(xWG - space / 2 + 1, 0, z - 100);
-                            Vector block2 = new Vector(xWG + space / 2 - 1, 255, z + 100);
-                            obWorldGuard.CreateRegion(name, block1, block2, id);
+                        if (!on) {
+                            Bukkit.getScheduler().runTaskTimer(this, new Task(), frequencyValue, frequencyValue * 2);
+                            on = true;
                         }
-                        id++;
-                        saveData();
-                        PlayerInfo curPlayer = new PlayerInfo();
-                        pInf.add(curPlayer);
-                        curPlayer.nick = name;
-                        if (!superlegacy && progressBar) {
-                            String temp = textP;
-                            if (levelBarMode)
-                                temp = levels.get(0).name;
-                            else if (papi)
-                                temp = PlaceholderAPI.setPlaceholders(player, textP);
-                            curPlayer.bar = (Bukkit.createBossBar(temp, levels.get(0).color, BarStyle.SEGMENTED_10,
-                                    BarFlag.DARKEN_SKY));
+                        if (progressBarEnabled)
+                            pInf.get(getID(name)).bar.setVisible(true);
+                        player.teleport(new Location(world, x + getID(name) * space + 0.5, y + 1.2, z + 0.5));
+                        if (worldGuardEnabled && obCanUse) {
+                            obWorldGuard.addMember(name, getID(name));
                         }
-                    }
-                    if (!on) {
-                        Bukkit.getScheduler().runTaskTimer(this, new Task(), frequency, frequency * 2);
-                        on = true;
-                    }
-                    if (progressBar)
-                        pInf.get(getID(name)).bar.setVisible(true);
-                    player.teleport(new Location(world, x + getID(name) * space + 0.5, y + 1.2, z + 0.5));
-                    if (worldGuard && obCanUse) {
-                        obWorldGuard.addMember(name, getID(name));
-                    }
-                    return true;
-                }
-                case ("leave"): {
-                    Player p = (Player) sender;
-                    if (!superlegacy)
-                        pInf.get(getID(p.getName())).bar.removePlayer(p);
-                    if (config.getDouble(yl) == 0 || leaveworld == null)
-                        return true;
-                    p.teleport(new Location(leaveworld, config.getDouble("xleave"), config.getDouble(yl),
-                            config.getDouble("zleave")));
-                    return true;
-                }
-                case ("set"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
                         return true;
                     }
-                    Player p = (Player) sender;
-                    Location l = p.getLocation();
-                    x = l.getBlockX();
-                    y = l.getBlockY();
-                    z = l.getBlockZ();
-                    world = l.getWorld();
-                    int temp;
-                    if (args.length >= 2) {
-                        try {
-                            temp = Integer.parseInt(args[1]);
-                        } catch (NumberFormatException nfe) {
-                            sender.sendMessage(String.format("%sinvalid value", ChatColor.RED));
+                    case ("leave"): {
+                        Player p = (Player) sender;
+                        if (!superlegacy)
+                            pInf.get(getID(p.getName())).bar.removePlayer(p);
+                        if (config.getDouble(Y_LEAVE) == 0 || leaveworld == null)
+                            return true;
+                        p.teleport(new Location(leaveworld, config.getDouble(X_LEAVE), config.getDouble(Y_LEAVE),
+                                config.getDouble(Z_LEAVE)));
+                        return true;
+                    }
+                    case ("set"): {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
                             return true;
                         }
-                        if (temp > 1000 || temp < -1000) {
+                        Player p = (Player) sender;
+                        Location l = p.getLocation();
+                        x = l.getBlockX();
+                        y = l.getBlockY();
+                        z = l.getBlockZ();
+                        world = l.getWorld();
+                        int temp;
+                        if (args.length >= 2) {
+                            try {
+                                temp = Integer.parseInt(args[1]);
+                            } catch (NumberFormatException nfe) {
+                                sender.sendMessage(String.format("%s Invalid value", ChatColor.RED));
+                                return true;
+                            }
+                            if (temp > 1000 || temp < -1000) {
+                                sender.sendMessage(
+                                        String.format("%s Possible values are from -1000 to 1000", ChatColor.RED));
+                                return true;
+                            }
+                            space = temp;
+                            config.set("set", space);
+                        }
+                        if(world != null) {
+                            config.set(DEFAULT_WORLD, world.getName());
+                        }
+                        config.set("x", (double) x);
+                        config.set("y", (double) y);
+                        config.set("z", (double) z);
+                        Config.Save(config);
+                        world.getBlockAt(x, y, z).setType(Objects.requireNonNull(grassBlock.parseMaterial()));
+                        recreateWorldGuard();
+                        return true;
+                    }
+                    case ("setleave"): {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
+                            return true;
+                        }
+                        Player p = (Player) sender;
+                        Location l = p.getLocation();
+                        leaveworld = l.getWorld();
+                        if (leaveworld != null){
+                            config.set(LEAVE_WORLD, leaveworld.getName());
+                        } else {
+                            return false;
+                        }
+                        config.set(X_LEAVE, l.getX());
+                        config.set(Y_LEAVE, l.getY());
+                        config.set(Z_LEAVE, l.getZ());
+                        Config.Save(config);
+                        return true;
+                    }
+                    case INVITE: {
+                        if (!sender.hasPermission("Oneblock.invite")) {
+                            sender.sendMessage(String.format("%sYou don't have the permission to execute this command",
+                                    ChatColor.RED));
+                            return true;
+                        }
+                        if (args.length < 2) {
+                            sender.sendMessage(String.format("%sUsage: /ob invite <username>", ChatColor.RED));
+                            return true;
+                        }
+                        Player inv = Bukkit.getPlayer(args[1]);
+                        if (inv != null) {
+                            if (inv == sender) {
+                                sender.sendMessage(String.format("%sYou can't invite yourself.", ChatColor.YELLOW));
+                                return true;
+                            }
+                            if (!existID(sender.getName())) {
+                                sender.sendMessage(
+                                        String.format("%sPlease create a customisland before you do this.",
+                                                ChatColor.YELLOW));
+                                return true;
+                            }
+                            addInvite(sender.getName(), inv.getName());
+                            inv.sendMessage(String.format("%sYou were invited by player %s.%n%s/ob accept to accept).",
+                                    ChatColor.GREEN, sender.getName(), ChatColor.RED));
+                            sender.sendMessage(String.format("%sSuccessfully invited %s.", ChatColor.GREEN, inv.getName()));
+                        }
+                        return true;
+                    }
+                    case ("kick"): {
+                        if (args.length < 2) {
+                            sender.sendMessage(String.format("%sUsage: /ob invite <username>", ChatColor.RED));
+                            return true;
+                        }
+                        Player inv = Bukkit.getPlayer(args[1]);
+                        String name = sender.getName();
+                        if (!checkInvalidID(name))
+                            return true;
+                        if (inv != null) {
+                            if (inv == sender) {
+                                sender.sendMessage(String.format("%sYou can't kick yourself.", ChatColor.YELLOW));
+                                return true;
+                            }
+                            if (pInf.get(getID(name)).nicks.contains(args[1])) {
+                                pInf.get(getID(name)).nicks.remove(args[1]);
+                                if (worldGuardEnabled && obCanUse)
+                                    obWorldGuard.removeMember(inv.getName(), getID(name));
+                                inv.performCommand("ob j");
+                                return true;
+                            }
+                        } else if (pInf.get(getID(name)).nicks.contains(args[1])) {
+                            pInf.get(getID(name)).nicks.remove(args[1]);
+                            sender.sendMessage(String.format("%sYou can't kick yourself.", ChatColor.YELLOW));
+                        }
+                        return true;
+                    }
+                    case ("accept"): {
+                        Player pl = (Player) sender;
+                        if (checkInvite(pl))
+                            sender.sendMessage(String.format("%sSuccessfully accepted the invitation.", ChatColor.GREEN));
+                        else
                             sender.sendMessage(
-                                    String.format("%spossible values are from -1000 to 1000", ChatColor.RED));
+                                    String.format("%s[There is no Pending invitations for you.]", ChatColor.RED));
+                        return true;
+                    }
+                    case ("idreset"): {
+                        Player pl = (Player) sender;
+                        String name = pl.getName();
+                        if (!existID(name))
                             return true;
-                        }
-                        space = temp;
-                        config.set("set", space);
-                    }
-                    if(world != null) {
-                        config.set(worldph, world.getName());
-                    }
-                    config.set("x", (double) x);
-                    config.set("y", (double) y);
-                    config.set("z", (double) z);
-                    Config.Save(config);
-                    world.getBlockAt(x, y, z).setType(Objects.requireNonNull(grassBlock.parseMaterial()));
-                    recreateworldGuard();
-                    return true;
-                }
-                case ("setleave"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
-                        return true;
-                    }
-                    Player p = (Player) sender;
-                    Location l = p.getLocation();
-                    leaveworld = l.getWorld();
-                    if (leaveworld != null){
-                        config.set(lworldph, leaveworld.getName());
-                    } else {
-                        return false;
-                    }
-                    config.set("xleave", l.getX());
-                    config.set(yl, l.getY());
-                    config.set("zleave", l.getZ());
-                    Config.Save(config);
-                    return true;
-                }
-                case ("invite"): {
-                    if (!sender.hasPermission("Oneblock.invite")) {
-                        sender.sendMessage(String.format("%sYou don't have the permission to execute this command",
-                                ChatColor.RED));
-                        return true;
-                    }
-                    if (args.length < 2) {
-                        sender.sendMessage(String.format("%sUsage: /ob invite <username>", ChatColor.RED));
-                        return true;
-                    }
-                    Player inv = Bukkit.getPlayer(args[1]);
-                    if (inv != null) {
-                        if (inv == sender) {
-                            sender.sendMessage(String.format("%sYou can't invite yourself.", ChatColor.YELLOW));
-                            return true;
-                        }
-                        if (!existID(sender.getName())) {
+                        int playerID = getID(name);
+                        if (progressBarEnabled)
+                            pInf.get(playerID).bar.removePlayer(pl);
+                        PlayerInfo plp = pInf.get(playerID);
+                        if (plp.nick.equals(name)) {
+                            if (!plp.nicks.isEmpty()) {
+                                plp.nick = plp.nicks.get(0);
+                                plp.nicks.remove(0);
+                            } else
+                                plp.nick = null;
+                        } else
+                            plp.nicks.remove(name);
+                        if (worldGuardEnabled && obCanUse)
+                            obWorldGuard.removeMember(name, playerID);
+                        if (!args[args.length - 1].equals("/n"))
                             sender.sendMessage(
-                                    String.format("%sPlease create a customisland before you do this.",
+                                    String.format(
+                                            "%sNow your data has been reset. You can create a new customisland /ob join.",
+                                            ChatColor.GREEN));
+                        return true;
+                    }
+                    case PROTECTION: {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
+                            return true;
+                        }
+                        if (args.length > 1 &&
+                                (args[1].equals(TRUE) || args[1].equals(FALSE))) {
+                            protectionEnabled = Boolean.parseBoolean(args[1]);
+                            config.set(PROTECTION, protectionEnabled);
+                        } else
+                            sender.sendMessage(String.format("%s Enter a valid value true or false", ChatColor.YELLOW));
+                        sender.sendMessage(String.format("%s The protection is currently: %s", ChatColor.GRAY,
+                                (protectionEnabled ? ENABLED : DISABLED)));
+                        return true;
+                    }
+                    case ("worldguard"): {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
+                            return true;
+                        }
+                        if (!Bukkit.getPluginManager().isPluginEnabled(WORLD_GUARD)) {
+                            sender.sendMessage(
+                                    String.format("%sThe worldGuard plugin was not detected!", ChatColor.YELLOW));
+                            return true;
+                        }
+                        if (obWorldGuard == null || !obCanUse) {
+                            sender.sendMessage(
+                                    String.format("%sThis feature is only available in the premium version of the plugin!",
                                             ChatColor.YELLOW));
                             return true;
                         }
-                        addInvite(sender.getName(), inv.getName());
-                        inv.sendMessage(String.format("%sYou were invited by player %s.%n%s/ob accept to accept).",
-                                ChatColor.GREEN, sender.getName(), ChatColor.RED));
-                        sender.sendMessage(String.format("%sSuccesfully invited %s.", ChatColor.GREEN, inv.getName()));
-                    }
-                    return true;
-                }
-                case ("kick"): {
-                    if (args.length < 2) {
-                        sender.sendMessage(String.format("%sUsage: /ob invite <username>", ChatColor.RED));
-                        return true;
-                    }
-                    Player inv = Bukkit.getPlayer(args[1]);
-                    String name = sender.getName();
-                    if (!checkInvalidID(name))
-                        return true;
-                    if (inv != null) {
-                        if (inv == sender) {
-                            sender.sendMessage(String.format("%sYou can't kick yourself.", ChatColor.YELLOW));
-                            return true;
-                        }
-                        if (pInf.get(getID(name)).nicks.contains(args[1])) {
-                            pInf.get(getID(name)).nicks.remove(args[1]);
-                            if (worldGuard && obCanUse)
-                                obWorldGuard.removeMember(inv.getName(), getID(name));
-                            inv.performCommand("ob j");
-                            return true;
-                        }
-                    } else if (pInf.get(getID(name)).nicks.contains(args[1])) {
-                        pInf.get(getID(name)).nicks.remove(args[1]);
-                        sender.sendMessage(String.format("%sYou can't kick yourself.", ChatColor.YELLOW));
-                    }
-                    return true;
-                }
-                case ("accept"): {
-                    Player pl = (Player) sender;
-                    if (checkInvite(pl))
-                        sender.sendMessage(String.format("%sSuccesfully accepted the invitation.", ChatColor.GREEN));
-                    else
-                        sender.sendMessage(
-                                String.format("%s[There is no Pending invitations for you.]", ChatColor.RED));
-                    return true;
-                }
-                case ("idreset"): {
-                    Player pl = (Player) sender;
-                    String name = pl.getName();
-                    if (!existID(name))
-                        return true;
-                    int playerID = getID(name);
-                    if (progressBar)
-                        pInf.get(playerID).bar.removePlayer(pl);
-                    PlayerInfo plp = pInf.get(playerID);
-                    if (plp.nick.equals(name)) {
-                        if (!plp.nicks.isEmpty()) {
-                            plp.nick = plp.nicks.get(0);
-                            plp.nicks.remove(0);
+                        if (args.length > 1 &&
+                                (args[1].equals(TRUE) || args[1].equals(FALSE))) {
+                            worldGuardEnabled = Boolean.parseBoolean(args[1]);
+                            config.set(WORLD_GUARD, worldGuardEnabled);
+                            if (worldGuardEnabled)
+                                recreateWorldGuard();
+                            else
+                                obWorldGuard.RemoveRegions(id);
                         } else
-                            plp.nick = null;
-                    } else
-                        plp.nicks.remove(name);
-                    if (worldGuard && obCanUse)
-                        obWorldGuard.removeMember(name, playerID);
-                    if (!args[args.length - 1].equals("/n"))
-                        sender.sendMessage(
-                                String.format(
-                                        "%sNow your data has been reset. You can create a new customisland /ob join.",
-                                        ChatColor.GREEN));
-                    return true;
-                }
-                case ("protection"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
+                            sender.sendMessage(String.format("%sEnter a valid value true or false", ChatColor.YELLOW));
+                        sender.sendMessage(String.format("%sThe obWorldGuard is now %s", ChatColor.GREEN,
+                                (worldGuardEnabled ? ENABLED : DISABLED)));
                         return true;
                     }
-                    if (args.length > 1 &&
-                            (args[1].equals("true") || args[1].equals("false"))) {
-                        protection = Boolean.parseBoolean(args[1]);
-                        config.set("protection", protection);
-                    } else
-                        sender.sendMessage(String.format("%senter a valid value true or false", ChatColor.YELLOW));
-                    sender.sendMessage(String.format("%sthe protection is now %s", ChatColor.GREEN,
-                            (protection ? "enabled." : "disabled.")));
-                    return true;
-                }
-                case ("worldguard"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
-                        return true;
-                    }
-                    if (!Bukkit.getPluginManager().isPluginEnabled(wgph)) {
-                        sender.sendMessage(
-                                String.format("%sThe worldGuard plugin was not detected!", ChatColor.YELLOW));
-                        return true;
-                    }
-                    if (obWorldGuard == null || !obCanUse) {
-                        sender.sendMessage(
-                                String.format("%sThis feature is only available in the premium version of the plugin!",
-                                        ChatColor.YELLOW));
-                        return true;
-                    }
-                    if (args.length > 1 &&
-                            (args[1].equals("true") || args[1].equals("false"))) {
-                        worldGuard = Boolean.parseBoolean(args[1]);
-                        config.set(wgph, worldGuard);
-                        if (worldGuard)
-                            recreateworldGuard();
-                        else
-                            obWorldGuard.RemoveRegions(id);
-                    } else
-                        sender.sendMessage(String.format("%senter a valid value true or false", ChatColor.YELLOW));
-                    sender.sendMessage(String.format("%sthe obWorldGuard is now %s", ChatColor.GREEN,
-                            (worldGuard ? "enabled." : "disabled.")));
-                    return true;
-                }
-                case ("autojoin"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
-                        return true;
-                    }
-                    if (args.length > 1 &&
-                            (args[1].equals("true") || args[1].equals("false"))) {
-                        autojoin = Boolean.parseBoolean(args[1]);
-                        config.set("autojoin", autojoin);
-                    } else
-                        sender.sendMessage(String.format("%senter a valid value true or false", ChatColor.YELLOW));
-                    sender.sendMessage(String.format("%sautojoin is now %s", ChatColor.GREEN,
-                            (autojoin ? "enabled." : "disabled.")));
-                    return true;
-                }
-                // LVL
-                case ("setlevel"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
-                        return true;
-                    }
-                    if (args.length <= 2) {
-                        sender.sendMessage(
-                                String.format("%sinvalid format. try: /ob setlevel 'nickname' 'level'", ChatColor.RED));
-                        return true;
-                    }
-                    if (existID(args[1])) {
-                        int setlvl;
-                        try {
-                            setlvl = Integer.parseInt(args[2]);
-                        } catch (NumberFormatException nfe) {
-                            sender.sendMessage(String.format("%sinvalid level value.", ChatColor.RED));
+                    case AUTOJOIN: {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
                             return true;
                         }
-                        if (setlvl >= 0 && 10000 > setlvl) {
+                        if (args.length > 1 &&
+                                (args[1].equals(TRUE) || args[1].equals(FALSE))) {
+                            autojoinEnabled = Boolean.parseBoolean(args[1]);
+                            config.set(AUTOJOIN, autojoinEnabled);
+                        } else
+                            sender.sendMessage(String.format("%sEnter a valid value true or false", ChatColor.YELLOW));
+                        sender.sendMessage(String.format("%sAutojoin is now %s", ChatColor.GREEN,
+                                (autojoinEnabled ? ENABLED : DISABLED)));
+                        return true;
+                    }
+                    // LVL
+                    case SETLEVEL: {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
+                            return true;
+                        }
+                        if (args.length <= 2) {
+                            sender.sendMessage(
+                                    String.format("%sInvalid format. try: /ob setlevel 'nickname' 'level'", ChatColor.RED));
+                            return true;
+                        }
+                        if (existID(args[1])) {
+                            int setlvl;
+                            try {
+                                setlvl = Integer.parseInt(args[2]);
+                            } catch (NumberFormatException nfe) {
+                                sender.sendMessage(String.format("%sInvalid level value.", ChatColor.RED));
+                                return true;
+                            }
+                            if (setlvl >= 0 && 10000 > setlvl) {
+                                int i = getID(args[1]);
+                                PlayerInfo curPlayer = pInf.get(i);
+                                curPlayer.breaks = 0;
+                                curPlayer.lvl = setlvl;
+                                if (levelBarModeEnabled) {
+                                    Level lvl = maxlevel;
+                                    if (curPlayer.lvl < levels.size())
+                                        lvl = levels.get(curPlayer.lvl);
+                                    curPlayer.bar.setTitle(lvl.name);
+                                    curPlayer.bar.setColor(lvl.color);
+                                }
+                                sender.sendMessage(String.format("%sFor player %s, level %s is set.", ChatColor.GREEN,
+                                        args[1], args[2]));
+                                return true;
+                            }
+                            sender.sendMessage(String.format("%sInvalid level value.", ChatColor.RED));
+                            return true;
+                        }
+                        sender.sendMessage(String.format("%sA player named %s was not found.", ChatColor.RED, args[1]));
+                        return true;
+                    }
+                    case CLEAR: {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
+                            return true;
+                        }
+                        if (args.length <= 1) {
+                            sender.sendMessage(String.format("%sInvalid format. try: /ob clear 'nickname'", ChatColor.RED));
+                            return true;
+                        }
+                        if (existID(args[1])) {
                             int i = getID(args[1]);
                             PlayerInfo curPlayer = pInf.get(i);
                             curPlayer.breaks = 0;
-                            curPlayer.lvl = setlvl;
-                            if (levelBarMode) {
-                                Level lvl = maxlevel;
-                                if (curPlayer.lvl < levels.size())
-                                    lvl = levels.get(curPlayer.lvl);
-                                curPlayer.bar.setTitle(lvl.name);
-                                curPlayer.bar.setColor(lvl.color);
-                            }
-                            sender.sendMessage(String.format("%sfor player %s, level %s is set.", ChatColor.GREEN,
-                                    args[1], args[2]));
+                            curPlayer.lvl = 0;
+                            if (progressBarEnabled)
+                                curPlayer.bar.setVisible(false);
+                            int xNow = x + i * 100 - 12;
+                            int yNow = y - 6;
+                            int zNow = z - 12;
+                            if (yNow <= 1)
+                                yNow = 1;
+                            for (int xx = 0; xx < 24; xx++)
+                                for (int yy = 0; yy < 16; yy++)
+                                    for (int zz = 0; zz < 24; zz++)
+                                        world.getBlockAt(xNow + xx, yNow + yy, zNow + zz).setType(Material.AIR);
+                            sender.sendMessage(
+                                    String.format("%sPlayer %s customisland is destroyed! :D", ChatColor.GREEN, args[1]));
                             return true;
                         }
-                        sender.sendMessage(String.format("%sinvalid level value.", ChatColor.RED));
+                        sender.sendMessage(String.format("%sA player named %s was not found.", ChatColor.RED, args[1]));
                         return true;
                     }
-                    sender.sendMessage(String.format("%sa player named %s was not found.", ChatColor.RED, args[1]));
-                    return true;
-                }
-                case ("clear"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
-                        return true;
-                    }
-                    if (args.length <= 1) {
-                        sender.sendMessage(String.format("%sinvalid format. try: /ob clear 'nickname'", ChatColor.RED));
-                        return true;
-                    }
-                    if (existID(args[1])) {
-                        int i = getID(args[1]);
-                        PlayerInfo curPlayer = pInf.get(i);
-                        curPlayer.breaks = 0;
-                        curPlayer.lvl = 0;
-                        if (progressBar)
-                            curPlayer.bar.setVisible(false);
-                        int xNow = x + i * 100 - 12;
-                        int yNow = y - 6;
-                        int zNow = z - 12;
-                        if (yNow <= 1)
-                            yNow = 1;
-                        for (int xx = 0; xx < 24; xx++)
-                            for (int yy = 0; yy < 16; yy++)
-                                for (int zz = 0; zz < 24; zz++)
-                                    world.getBlockAt(xNow + xx, yNow + yy, zNow + zz).setType(Material.AIR);
-                        sender.sendMessage(
-                                String.format("%splayer %s customisland is destroyed! :D", ChatColor.GREEN, args[1]));
-                        return true;
-                    }
-                    sender.sendMessage(String.format("%sa player named %s was not found.", ChatColor.RED, args[1]));
-                    return true;
-                }
-                case ("levelmultiplier"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
-                        return true;
-                    }
-                    if (args.length <= 1) {
+                    case ("levelmultiplier"): {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
+                            return true;
+                        }
+                        if (args.length <= 1) {
+                            sender.sendMessage(
+                                    String.format("%s level multiplier now: %d%n5 by default", ChatColor.GREEN,
+                                            levelMultiplier));
+                            return true;
+                        }
+                        int lvl;
+                        try {
+                            lvl = Integer.parseInt(args[1]);
+                        } catch (NumberFormatException nfe) {
+                            sender.sendMessage(String.format("%sInvalid multiplier value.", ChatColor.RED));
+                            return true;
+                        }
+                        if (lvl <= 20 && lvl >= 0) {
+                            synchronized (this) {
+                                levelMultiplier = lvl;
+                            }
+                            config.set("level_multiplier", levelMultiplier);
+                        } else
+                            sender.sendMessage(String.format("%sPossible values: from 0 to 20.", ChatColor.RED));
                         sender.sendMessage(
                                 String.format("%s level multiplier now: %d%n5 by default", ChatColor.GREEN,
                                         levelMultiplier));
                         return true;
                     }
-                    int lvl;
-                    try {
-                        lvl = Integer.parseInt(args[1]);
-                    } catch (NumberFormatException nfe) {
-                        sender.sendMessage(String.format("%sinvalid multiplier value.", ChatColor.RED));
-                        return true;
-                    }
-                    if (lvl <= 20 && lvl >= 0) {
-                        levelMultiplier = lvl;
-                        config.set("level_multiplier", levelMultiplier);
-                    } else
-                        sender.sendMessage(String.format("%spossible values: from 0 to 20.", ChatColor.RED));
-                    sender.sendMessage(
-                            String.format("%s level multiplier now: %d%n5 by default", ChatColor.GREEN,
-                                    levelMultiplier));
-                    return true;
-                }
-                case ("progressbarph"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
-                        return true;
-                    }
-                    if (superlegacy) {
-                        sender.sendMessage(String.format(
-                                "%sYou server version is super legacy! ProgressBar unsupported!", ChatColor.RED));
-                        return true;
-                    }
-                    if (args.length == 1) {
-                        sender.sendMessage(String.format("%sand?", ChatColor.YELLOW));
-                        return true;
-                    }
-                    if (args[1].equals("true") || args[1].equals("false")) {
-                        progressBar = Boolean.parseBoolean(args[1]);
-                        if (progressBar) {
-                            if (progressBarColor == null)
-                                progressBarColor = BarColor.GREEN;
-                            blockFile();
-                        }
-                        for (PlayerInfo bb : pInf)
-                            if (bb.bar != null)
-                                bb.bar.setVisible(progressBar);
-                        config.set(progressbarph, progressBar);
-                        return true;
-                    }
-                    if (args[1].equalsIgnoreCase("color")) {
-                        if (args.length == 2) {
-                            sender.sendMessage(String.format("%senter a color name.", ChatColor.YELLOW));
+                    case ("progressbarph"): {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
                             return true;
                         }
-                        try {
-                            progressBarColor = BarColor.valueOf(args[2]);
+                        if (superlegacy) {
+                            sender.sendMessage(String.format(
+                                    "%sYou server version is super legacy! ProgressBar unsupported!", ChatColor.RED));
+                            return true;
+                        }
+                        if (args.length == 1) {
+                            sender.sendMessage(String.format("%sand?", ChatColor.YELLOW));
+                            return true;
+                        }
+                        if (args[1].equals(TRUE) || args[1].equals(FALSE)) {
+                            progressBarEnabled = Boolean.parseBoolean(args[1]);
+                            if (progressBarEnabled) {
+                                if (progressBarColor == null)
+                                    progressBarColor = BarColor.GREEN;
+                                blockFile();
+                            }
                             for (PlayerInfo bb : pInf)
-                                bb.bar.setColor(progressBarColor);
-                            blockFile();
-                            config.set("progressBar_color", progressBarColor.toString());
-                        } catch (Exception e) {
+                                if (bb.bar != null)
+                                    bb.bar.setVisible(progressBarEnabled);
+                            config.set(PROGRESS_BAR, progressBarEnabled);
+                            return true;
+                        }
+                        if (args[1].equalsIgnoreCase(COLOR)) {
+                            if (args.length == 2) {
+                                sender.sendMessage(String.format("%sEnter a color name.", ChatColor.YELLOW));
+                                return true;
+                            }
+                            try {
+                                progressBarColor = BarColor.valueOf(args[2]);
+                                for (PlayerInfo bb : pInf)
+                                    bb.bar.setColor(progressBarColor);
+                                blockFile();
+                                config.set("progressBar_color", progressBarColor.toString());
+                            } catch (Exception e) {
+                                sender.sendMessage(
+                                        String.format("%sPlease enter a valid color. For example: RED", ChatColor.YELLOW));
+                            }
                             sender.sendMessage(
-                                    String.format("%sPlease enter a valid color. For example: RED", ChatColor.YELLOW));
+                                    String.format("%sProgress bar color = %s", ChatColor.GREEN,
+                                            progressBarColor.toString()));
+                            return true;
+                        }
+                        if (args[1].equalsIgnoreCase(LEVEL)) {
+                            if (!progressBarEnabled)
+                                return true;
+                            if (!levelBarModeEnabled) {
+                                levelBarModeEnabled = true;
+                                for (PlayerInfo curPlayer : pInf)
+                                    if (curPlayer.lvl >= levels.size())
+                                        curPlayer.bar.setTitle(maxlevel.name);
+                                    else
+                                        curPlayer.bar.setTitle(levels.get(curPlayer.lvl).name);
+                                config.set(PROGRESS_BAR_TEXT, LEVEL);
+                            } else {
+                                levelBarModeEnabled = false;
+                                for (PlayerInfo bb : pInf)
+                                    bb.bar.setTitle("Progress bar");
+                                config.set(PROGRESS_BAR_TEXT, "Progress bar");
+                            }
+                            return true;
+                        }
+                        if (args[1].equalsIgnoreCase(SET_TEXT)) {
+                            if (!progressBarEnabled)
+                                return true;
+                            StringBuilder textBar = new StringBuilder();
+                            for (int i = 2; i < args.length - 1; i++)
+                                textBar.append(args[i]).append(" ");
+                            textBar.append(args[args.length - 1]);
+                            levelBarModeEnabled = false;
+                            for (PlayerInfo bb : pInf)
+                                bb.bar.setTitle(textBar.toString());
+                            config.set(PROGRESS_BAR_TEXT, textBar.toString());
+                            textP = textBar.toString();
+                            if (papiEnabled)
+                                for (Player ponl : Bukkit.getOnlinePlayers())
+                                    pInf.get(getID(ponl.getName())).bar
+                                            .setTitle(PlaceholderAPI.setPlaceholders(ponl, textBar.toString()));
+                            return true;
+                        }
+                        sender.sendMessage(String.format("%s true, false, settext or level only!", ChatColor.RED));
+                        return true;
+                    }
+                    case LISTLVL: {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
+                            return true;
+                        }
+                        if (args.length >= 2) {
+                            int temp;
+                            try {
+                                temp = Integer.parseInt(args[1]);
+                            } catch (NumberFormatException nfe) {
+                                sender.sendMessage(String.format("%sInvalid value", ChatColor.RED));
+                                return true;
+                            }
+                            if (levels.size() <= temp || temp < 0) {
+                                sender.sendMessage(String.format("%sUndefined lvl", ChatColor.RED));
+                                return true;
+                            }
+                            sender.sendMessage(String.format("%s%s", ChatColor.GREEN, levels.get(temp).name));
+                            int i = 0;
+                            if (temp != 0)
+                                i = levels.get(temp - 1).size;
+                            for (; i < levels.get(temp).size; i++)
+                                if (blocks.get(i) == null)
+                                    sender.sendMessage("Grass or undefined");
+                                else if (blocks.get(i).getClass() == XMaterial.class)
+                                    sender.sendMessage(((XMaterial) blocks.get(i)).name());
+                                else
+                                    sender.sendMessage((String) blocks.get(i));
+                            return true;
+                        }
+                        for (int i = 0; i < levels.size(); i++)
+                            sender.sendMessage(String.format("%d: %s%s", i, ChatColor.GREEN, levels.get(i).name));
+                        return true;
+                    }
+                    case RELOAD: {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
+                            return true;
+                        }
+                        if (args.length == 1) {
+                            sender.sendMessage(String.format("%sReloading Plugin & Plugin Modules.", ChatColor.YELLOW));
+                            blockFile();
+                            flowerFile();
+                            chestFile();
+                            mobFile();
+                            recreateWorldGuard();
+                            sender.sendMessage(String.format("%sAll .yml reloaded!", ChatColor.GREEN));
+                            return true;
+                        }
+                        if (args[1].equalsIgnoreCase(BLOCKS_YML)) {
+                            blockFile();
+                            sender.sendMessage(String.format("%sBlocks.yml reloaded!", ChatColor.GREEN));
+                            return true;
+                        }
+                        if (args[1].equalsIgnoreCase(FLOWERS_YML)) {
+                            flowerFile();
+                            sender.sendMessage(String.format("%sFlowers.yml reloaded!", ChatColor.GREEN));
+                            return true;
+                        }
+                        if (args[1].equalsIgnoreCase(CHESTS_YML)) {
+                            chestFile();
+                            sender.sendMessage(String.format("%sChests.yml reloaded!", ChatColor.GREEN));
+                            return true;
+                        }
+                        if (args[1].equalsIgnoreCase(MOBS_YML)) {
+                            mobFile();
+                            sender.sendMessage(String.format("%sMobs.yml reloaded!", ChatColor.GREEN));
+                            return true;
+                        }
+                        sender.sendMessage(String.format("%sTry blocks.yml or chests.yml", ChatColor.RED));
+                        return true;
+                    }
+                    case "chatalert": {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
+                            return true;
+                        }
+                        chatAlertEnabled = !chatAlertEnabled;
+                        sender.sendMessage(
+                                ChatColor.GREEN + (chatAlertEnabled ? "Alerts are now on!" : "Alerts are now disabled!"));
+                        config.set(CHAT_ALERT, chatAlertEnabled);
+                        return true;
+                    }
+                    case FREQUENCY: {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
+                            return true;
+                        }
+                        if (args.length == 1) {
+                            sender.sendMessage(ChatColor.YELLOW + "enter a valid value (4 to 20)\n7 by default");
+                            return true;
+                        }
+                        long frequencytemp;
+                        String frequencyName = "";
+                        try {
+                            frequencytemp = Long.parseLong(args[1]);
+                        } catch (Exception e) {
+                            sender.sendMessage(ChatColor.YELLOW + "enter a valid value (4 to 20)\n7 by default");
+                            return true;
+                        }
+                        if (frequencytemp >= 4L && frequencytemp <= 20L && on) {
+                            frequencyValue = frequencytemp;
+                            Bukkit.getScheduler().cancelTasks(this);
+                            config.set(FREQUENCY, frequencyValue);
+                            if (frequencyValue == 4L)
+                                frequencyName = " (Extreme)";
+                            else if (frequencyValue < 7L)
+                                frequencyName = " (Fast)";
+                            else if (frequencyValue == 7L)
+                                frequencyName = " (Default)";
+                            else if (frequencyValue < 9L)
+                                frequencyName = " (Normal)";
+                            else if (frequencyValue < 13L)
+                                frequencyName = " (Slow)";
+                            else if (frequencyValue < 17L)
+                                frequencyName = " (Slower)";
+                            else
+                                frequencyName = " (Max TPS)";
+                            Bukkit.getScheduler().runTaskTimer(this, new Task(), frequencyValue, frequencyValue * 2);
+                        }
+                        sender.sendMessage(ChatColor.GREEN + "Now frequency = " + frequencyValue + frequencyName);
+                        return true;
+                    }
+                    case ISLANDS: {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
+                            return true;
+                        }
+                        if (args.length == 1) {
+                            sender.sendMessage(ChatColor.YELLOW + TRUE_OR_FALSE);
+                            return true;
+                        }
+                        if (args[1].equals(TRUE) || args[1].equals(FALSE)) {
+                            il3x3 = Boolean.parseBoolean(args[1]);
+                            config.set("Island_for_new_players", il3x3);
+                            sender.sendMessage(ChatColor.GREEN + "Island_for_new_players = " + il3x3);
+                            return true;
+                        }
+                        if (args[1].equals("set_my_by_def")) {
+                            if (legacy) {
+                                sender.sendMessage(ChatColor.RED + "Not supported in legacy versions!");
+                                return true;
+                            }
+                            Player p = (Player) sender;
+                            String name = p.getName();
+                            if (existID(name)) {
+                                if (customisland == null)
+                                    customisland = new BlockData[7][3][7];
+                                int px = x + getID(name) * space - 3;
+                                for (int xx = 0; xx < 7; xx++)
+                                    for (int yy = 0; yy < 3; yy++)
+                                        for (int zz = 0; zz < 7; zz++)
+                                            customisland[xx][yy][zz] = world.getBlockAt(px + xx, y + yy, z - 3 + zz)
+                                                    .getBlockData();
+                                sender.sendMessage(ChatColor.GREEN
+                                        + "Your customisland has been successfully saved and set as default for new players!");
+                            } else
+                                sender.sendMessage(ChatColor.RED + "You don't have an customisland!");
+                            return true;
+                        }
+                        if (args[1].equalsIgnoreCase("default")) {
+                            if (legacy) {
+                                sender.sendMessage(ChatColor.RED + "Not supported in legacy versions!");
+                                return true;
+                            }
+                            config.set(CUSTOM_ISLAND, null);
+                            customisland = null;
+                            sender.sendMessage(ChatColor.GREEN + "The default customisland is installed.");
+                            return true;
+                        }
+                        sender.sendMessage(ChatColor.YELLOW + TRUE_OR_FALSE);
+                        return true;
+                    }
+                    case ISLAND_REBIRTH: {
+                        if (!sender.hasPermission(permissionSet)) {
+                            sender.sendMessage(NO_PERMISSION_OBSET);
+                            return true;
+                        }
+                        if (args.length == 1) {
+                            sender.sendMessage(ChatColor.YELLOW + TRUE_OR_FALSE);
+                            return true;
+                        }
+                        if (args[1].equals(TRUE) || args[1].equals(FALSE)) {
+                            rebirthEnabled = Boolean.parseBoolean(args[1]);
+                            config.set("Rebirth_on_the_island", rebirthEnabled);
+                            sender.sendMessage(ChatColor.GREEN + "Rebirth_on_the_island = " + rebirthEnabled);
+                            return true;
+                        }
+                        sender.sendMessage(ChatColor.YELLOW + TRUE_OR_FALSE);
+                        return true;
+                    }
+                    case ("help"): {
+                        sender.sendMessage(ChatColor.GREEN + "OnlyBlock Plugin Help");
+                        boolean admin = sender.hasPermission(permissionSet);
+                        if (admin)
+                            sender.sendMessage(ChatColor.GRAY + "/ob set" + ChatColor.WHITE
+                                    + " - sets the location of the first Island.");
+                        sender.sendMessage(
+                                ChatColor.GRAY + "/ob j" + ChatColor.WHITE + " - join a new one or your own Island.");
+                        if (admin)
+                            sender.sendMessage(ChatColor.GRAY + "/ob protection" + ChatColor.WHITE
+                                    + " - does not allow players to leave their Island.");
+                        sender.sendMessage(ChatColor.GRAY + "/ob invite 'player-name'" + ChatColor.WHITE
+                                + " - an invitation to the Island.\n" +
+                                ChatColor.GRAY + "/ob accept" + ChatColor.WHITE + " - to accept an invitation.");
+                        if (admin) {
+                            sender.sendMessage(ChatColor.GRAY + "/ob islands true" + ChatColor.WHITE
+                                    + " - islands for new players.\n" +
+                                    ChatColor.GRAY + "/ob islands set_my_by_def" + ChatColor.WHITE
+                                    + " - sets your customisland as default for new players.");
                         }
                         sender.sendMessage(
-                                String.format("%sProgress bar color = %s", ChatColor.GREEN,
-                                        progressBarColor.toString()));
+                                ChatColor.GRAY + "/ob IDreset" + ChatColor.WHITE + " - deletes the player's data.");
                         return true;
                     }
-                    if (args[1].equalsIgnoreCase("level")) {
-                        if (!progressBar)
-                            return true;
-                        if (!levelBarMode) {
-                            levelBarMode = true;
-                            for (PlayerInfo curPlayer : pInf)
-                                if (curPlayer.lvl >= levels.size())
-                                    curPlayer.bar.setTitle(maxlevel.name);
-                                else
-                                    curPlayer.bar.setTitle(levels.get(curPlayer.lvl).name);
-                            config.set(progressbartext, "level");
-                        } else {
-                            levelBarMode = false;
-                            for (PlayerInfo bb : pInf)
-                                bb.bar.setTitle("Progress bar");
-                            config.set(progressbartext, "Progress bar");
-                        }
+                    default:
+                        // ver
+                        sender.sendMessage(String.format("%s%s%n%s%n%s%n%s%n%s%s",
+                                ChatColor.values()[rnd.nextInt(ChatColor.values().length)],
+                                "  ▄▄    ▄▄",
+                                "█    █  █▄▀",
+                                "▀▄▄▀ █▄▀",
+                                "Created by Yoshoo\nPlugin version: v0.0.1",
+                                "Server version: ",
+                                superlegacy ? "super legacy(1.7 - 1.8)" : (legacy ? "legacy(1.9 - 1.12)" : version)));
                         return true;
-                    }
-                    if (args[1].equalsIgnoreCase("settext")) {
-                        if (!progressBar)
-                            return true;
-                        StringBuilder textBar = new StringBuilder();
-                        for (int i = 2; i < args.length - 1; i++)
-                            textBar.append(args[i]).append(" ");
-                        textBar.append(args[args.length - 1]);
-                        levelBarMode = false;
-                        for (PlayerInfo bb : pInf)
-                            bb.bar.setTitle(textBar.toString());
-                        config.set(progressbartext, textBar.toString());
-                        textP = textBar.toString();
-                        if (papi)
-                            for (Player ponl : Bukkit.getOnlinePlayers())
-                                pInf.get(getID(ponl.getName())).bar
-                                        .setTitle(PlaceholderAPI.setPlaceholders(ponl, textBar.toString()));
-                        return true;
-                    }
-                    sender.sendMessage(String.format("%strue, false, settext or level only!", ChatColor.RED));
-                    return true;
                 }
-                case ("listlvl"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
-                        return true;
-                    }
-                    if (args.length >= 2) {
-                        int temp;
-                        try {
-                            temp = Integer.parseInt(args[1]);
-                        } catch (NumberFormatException nfe) {
-                            sender.sendMessage(String.format("%sinvalid value", ChatColor.RED));
-                            return true;
-                        }
-                        if (levels.size() <= temp || temp < 0) {
-                            sender.sendMessage(String.format("%sundefined lvl", ChatColor.RED));
-                            return true;
-                        }
-                        sender.sendMessage(String.format("%s%s", ChatColor.GREEN, levels.get(temp).name));
-                        int i = 0;
-                        if (temp != 0)
-                            i = levels.get(temp - 1).size;
-                        for (; i < levels.get(temp).size; i++)
-                            if (blocks.get(i) == null)
-                                sender.sendMessage("Grass or undefined");
-                            else if (blocks.get(i).getClass() == XMaterial.class)
-                                sender.sendMessage(((XMaterial) blocks.get(i)).name());
-                            else
-                                sender.sendMessage((String) blocks.get(i));
-                        return true;
-                    }
-                    for (int i = 0; i < levels.size(); i++)
-                        sender.sendMessage(String.format("%d: %s%s", i, ChatColor.GREEN, levels.get(i).name));
-                    return true;
-                }
-                case ("reload"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
-                        return true;
-                    }
-                    if (args.length == 1) {
-                        sender.sendMessage(String.format("%sReloading Plugin & Plugin Modules.", ChatColor.YELLOW));
-                        blockFile();
-                        flowerFile();
-                        chestFile();
-                        mobFile();
-                        recreateworldGuard();
-                        sender.sendMessage(String.format("%sAll .yml reloaded!", ChatColor.GREEN));
-                        return true;
-                    }
-                    if (args[1].equalsIgnoreCase(blocksfile)) {
-                        blockFile();
-                        sender.sendMessage(String.format("%sBlocks.yml reloaded!", ChatColor.GREEN));
-                        return true;
-                    }
-                    if (args[1].equalsIgnoreCase(flowerfile)) {
-                        flowerFile();
-                        sender.sendMessage(String.format("%sFlowers.yml reloaded!", ChatColor.GREEN));
-                        return true;
-                    }
-                    if (args[1].equalsIgnoreCase(chestfile)) {
-                        chestFile();
-                        sender.sendMessage(String.format("%sChests.yml reloaded!", ChatColor.GREEN));
-                        return true;
-                    }
-                    if (args[1].equalsIgnoreCase(mobfile)) {
-                        mobFile();
-                        sender.sendMessage(String.format("%sMobs.yml reloaded!", ChatColor.GREEN));
-                        return true;
-                    }
-                    sender.sendMessage(String.format("%sTry blocks.yml or chests.yml", ChatColor.RED));
-                    return true;
-                }
-                case ("chatalert"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
-                        return true;
-                    }
-                    chatAlert = !chatAlert;
-                    sender.sendMessage(
-                            ChatColor.GREEN + (chatAlert ? "Alerts are now on!" : "Alerts are now disabled!"));
-                    config.set("chatAlert", chatAlert);
-                    return true;
-                }
-                case ("frequency"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
-                        return true;
-                    }
-                    if (args.length == 1) {
-                        sender.sendMessage(ChatColor.YELLOW + "enter a valid value (4 to 20)\n7 by default");
-                        return true;
-                    }
-                    long frequencytemp;
-                    String frequencyName = "";
-                    try {
-                        frequencytemp = Long.parseLong(args[1]);
-                    } catch (Exception e) {
-                        sender.sendMessage(ChatColor.YELLOW + "enter a valid value (4 to 20)\n7 by default");
-                        return true;
-                    }
-                    if (frequencytemp >= 4L && frequencytemp <= 20L && on) {
-                        frequency = frequencytemp;
-                        Bukkit.getScheduler().cancelTasks(this);
-                        config.set("frequency", frequency);
-                        if (frequency == 4L)
-                            frequencyName = " (Extreme)";
-                        else if (frequency < 7L)
-                            frequencyName = " (Fast)";
-                        else if (frequency == 7L)
-                            frequencyName = " (Default)";
-                        else if (frequency < 9L)
-                            frequencyName = " (Normal)";
-                        else if (frequency < 13L)
-                            frequencyName = " (Slow)";
-                        else if (frequency < 17L)
-                            frequencyName = " (Slower)";
-                        else
-                            frequencyName = " (Max TPS)";
-                        Bukkit.getScheduler().runTaskTimer(this, new Task(), frequency, frequency * 2);
-                    }
-                    sender.sendMessage(ChatColor.GREEN + "Now frequency = " + frequency + frequencyName);
-                    return true;
-                }
-                case ("islands"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
-                        return true;
-                    }
-                    if (args.length == 1) {
-                        sender.sendMessage(ChatColor.YELLOW + "enter a valid value true or false");
-                        return true;
-                    }
-                    if (args[1].equals("true") || args[1].equals("false")) {
-                        il3x3 = Boolean.parseBoolean(args[1]);
-                        config.set("Island_for_new_players", il3x3);
-                        sender.sendMessage(ChatColor.GREEN + "Island_for_new_players = " + il3x3);
-                        return true;
-                    }
-                    if (args[1].equals("set_my_by_def")) {
-                        if (legacy) {
-                            sender.sendMessage(ChatColor.RED + "Not supported in legacy versions!");
-                            return true;
-                        }
-                        Player p = (Player) sender;
-                        String name = p.getName();
-                        if (existID(name)) {
-                            if (customisland == null)
-                                customisland = new BlockData[7][3][7];
-                            int px = x + getID(name) * space - 3;
-                            for (int xx = 0; xx < 7; xx++)
-                                for (int yy = 0; yy < 3; yy++)
-                                    for (int zz = 0; zz < 7; zz++)
-                                        customisland[xx][yy][zz] = world.getBlockAt(px + xx, y + yy, z - 3 + zz)
-                                                .getBlockData();
-                            sender.sendMessage(ChatColor.GREEN
-                                    + "Your customisland has been successfully saved and set as default for new players!");
-                        } else
-                            sender.sendMessage(ChatColor.RED + "You don't have an customisland!");
-                        return true;
-                    }
-                    if (args[1].equalsIgnoreCase("default")) {
-                        if (legacy) {
-                            sender.sendMessage(ChatColor.RED + "Not supported in legacy versions!");
-                            return true;
-                        }
-                        config.set("custom_island", null);
-                        customisland = null;
-                        sender.sendMessage(ChatColor.GREEN + "The default customisland is installed.");
-                        return true;
-                    }
-                    sender.sendMessage(ChatColor.YELLOW + "enter a valid value true or false");
-                    return true;
-                }
-                case ("island_rebirth"): {
-                    if (!sender.hasPermission(permissionSet)) {
-                        sender.sendMessage(noPermission);
-                        return true;
-                    }
-                    if (args.length == 1) {
-                        sender.sendMessage(ChatColor.YELLOW + "enter a valid value true or false");
-                        return true;
-                    }
-                    if (args[1].equals("true") || args[1].equals("false")) {
-                        rebirth = Boolean.parseBoolean(args[1]);
-                        config.set("Rebirth_on_the_island", rebirth);
-                        sender.sendMessage(ChatColor.GREEN + "Rebirth_on_the_island = " + rebirth);
-                        return true;
-                    }
-                    sender.sendMessage(ChatColor.YELLOW + "enter a valid value true or false");
-                    return true;
-                }
-                case ("help"): {
-                    sender.sendMessage(ChatColor.GREEN + "OnlyBlock Plugin Help");
-                    boolean admin = sender.hasPermission(permissionSet);
-                    if (admin)
-                        sender.sendMessage(ChatColor.GRAY + "/ob set" + ChatColor.WHITE
-                                + " - sets the location of the first Island.");
-                    sender.sendMessage(
-                            ChatColor.GRAY + "/ob j" + ChatColor.WHITE + " - join a new one or your own Island.");
-                    if (admin)
-                        sender.sendMessage(ChatColor.GRAY + "/ob protection" + ChatColor.WHITE
-                                + " - does not allow players to leave their Island.");
-                    sender.sendMessage(ChatColor.GRAY + "/ob invite 'playername'" + ChatColor.WHITE
-                            + " - an invitation to the Island.\n" +
-                            ChatColor.GRAY + "/ob accept" + ChatColor.WHITE + " - to accept an invitation.");
-                    if (admin) {
-                        sender.sendMessage(ChatColor.GRAY + "/ob islands true" + ChatColor.WHITE
-                                + " - islands for new players.\n" +
-                                ChatColor.GRAY + "/ob islands set_my_by_def" + ChatColor.WHITE
-                                + " - sets your customisland as default for new players.");
-                    }
-                    sender.sendMessage(
-                            ChatColor.GRAY + "/ob IDreset" + ChatColor.WHITE + " - deletes the player's data.");
-                    return true;
-                }
-                default:
-                    // ver
-                    sender.sendMessage(String.format("%s%s%n%s%n%s%n%s%n%s%s",
-                            ChatColor.values()[rnd.nextInt(ChatColor.values().length)],
-                            "  ▄▄    ▄▄",
-                            "█    █  █▄▀",
-                            "▀▄▄▀ █▄▀",
-                            "Created by Yoshoo\nPlugin version: v0.0.1",
-                            "Server version: ",
-                            superlegacy ? "super legacy(1.7 - 1.8)" : (legacy ? "legacy(1.9 - 1.12)" : version)));
-                    return true;
             }
         } else {
             sender.sendMessage(ChatColor.RED + "Error.");
             return false;
         }
+        return false;
     }
 
     ArrayList<Player> playerList() {
@@ -1140,8 +1193,8 @@ public class Oneblock extends JavaPlugin {
         return false;
     }
 
-    private void recreateworldGuard() {
-        if (worldGuard || obCanUse) {
+    private void recreateWorldGuard() {
+        if (worldGuardEnabled && obCanUse) {
             obWorldGuard.RemoveRegions(id);
             for (int i = 0; i < id; i++) {
                 PlayerInfo owner = pInf.get(i);
@@ -1160,7 +1213,7 @@ public class Oneblock extends JavaPlugin {
 
     public void saveData() {
         try {
-            File playerData = new File(getDataFolder(), playerDF);
+            File playerData = new File(getDataFolder(), PLAYER_DATA_JSON);
             JsonSimple.Write(id, pInf, playerData);
         } catch (Exception e) {
             e.printStackTrace();
@@ -1174,9 +1227,9 @@ public class Oneblock extends JavaPlugin {
     private void blockFile() {
         blocks.clear();
         levels.clear();
-        File block = new File(getDataFolder(), blocksfile);
+        File block = new File(getDataFolder(), BLOCKS_YML);
         if (!block.exists())
-            saveResource(blocksfile, false);
+            saveResource(BLOCKS_YML, false);
         newConfig = YamlConfiguration.loadConfiguration(block);
         if (newConfig.isString("MaxLevel"))
             maxlevel.name = newConfig.getString("MaxLevel");
@@ -1185,7 +1238,7 @@ public class Oneblock extends JavaPlugin {
             Level level = new Level(blockTemp.get(0));
             levels.add(level);
             int q = 1;
-            if (progressBar && q < blockTemp.size())
+            if (progressBarEnabled && q < blockTemp.size())
                 try {
                     level.color = BarColor.valueOf(blockTemp.get(1));
                     q++;
@@ -1206,13 +1259,13 @@ public class Oneblock extends JavaPlugin {
         }
         maxlevel.size = blocks.size();
         // progressBar
-        if (!superlegacy && progressBar && !pInf.isEmpty() && pInf.get(0).bar == null) {
+        if (!superlegacy && progressBarEnabled && !pInf.isEmpty() && pInf.get(0).bar == null) {
             maxlevel.color = progressBarColor;
             for (PlayerInfo curPlayer : pInf) {
                 Level lvl = maxlevel;
                 if (curPlayer.lvl < levels.size())
                     lvl = levels.get(curPlayer.lvl);
-                curPlayer.bar = Bukkit.createBossBar(levelBarMode ? lvl.name : textP, lvl.color, BarStyle.SEGMENTED_10,
+                curPlayer.bar = Bukkit.createBossBar(levelBarModeEnabled ? lvl.name : textP, lvl.color, BarStyle.SEGMENTED_10,
                         BarFlag.DARKEN_SKY);
             }
             Bukkit.getPluginManager().registerEvents(new ChangedWorld(), this);
@@ -1221,9 +1274,9 @@ public class Oneblock extends JavaPlugin {
 
     private void flowerFile() {
         flowers.clear();
-        File flower = new File(getDataFolder(), flowerfile);
+        File flower = new File(getDataFolder(), FLOWERS_YML);
         if (!flower.exists())
-            saveResource(flowerfile, false);
+            saveResource(FLOWERS_YML, false);
         newConfig = YamlConfiguration.loadConfiguration(flower);
         flowers.add(grass);
         for (String list : newConfig.getStringList("flowers"))
@@ -1243,9 +1296,9 @@ public class Oneblock extends JavaPlugin {
         smallChest = new ArrayList<>();
         mediumChest = new ArrayList<>();
         hardChest = new ArrayList<>();
-        File chest = new File(getDataFolder(), chestfile);
+        File chest = new File(getDataFolder(), CHESTS_YML);
         if (!chest.exists())
-            saveResource(chestfile, false);
+            saveResource(CHESTS_YML, false);
         newConfig = YamlConfiguration.loadConfiguration(chest);
         for (String s : newConfig.getStringList("small_chest"))
             smallChest.add(Material.getMaterial(s));
@@ -1258,9 +1311,9 @@ public class Oneblock extends JavaPlugin {
     private void mobFile() {
 
         mobs.clear();
-        File mob = new File(getDataFolder(), mobfile);
+        File mob = new File(getDataFolder(), MOBS_YML);
         if (!mob.exists())
-            saveResource(mobfile, false);
+            saveResource(MOBS_YML, false);
         newConfig = YamlConfiguration.loadConfiguration(mob);
         for (int i = 0; newConfig.isString("id" + i); i++) {
             try {
@@ -1272,70 +1325,74 @@ public class Oneblock extends JavaPlugin {
     }
 
     private void dataFile() {
-        File playerData = new File(getDataFolder(), playerDF);
+        File playerData = new File(getDataFolder(), PLAYER_DATA_JSON);
         if (playerData.exists())
-            pInf = JsonSimple.Read(playerData);
-        if (worldGuard && obCanUse) {
-            recreateworldGuard();
+            synchronized (this) {
+                pInf = JsonSimple.Read(playerData);
+            }
+        if (worldGuardEnabled && obCanUse) {
+            recreateWorldGuard();
         }
         id = pInf.size();
     }
 
     private void configFile() {
-        File con = new File(getDataFolder(), configfile);
-        if (!con.exists())
-            saveResource(configfile, false);
+        File configFile = new File(getDataFolder(), CONFIG_YML);
+        if (!configFile.exists())
+            saveResource(CONFIG_YML, false);
         config = this.getConfig();
-        world = Bukkit.getWorld(check(worldph, worldph));
+        world = Bukkit.getWorld(check(DEFAULT_WORLD, DEFAULT_WORLD));
         x = (int) check("x", (double) x);
         y = (int) check("y", (double) y);
         z = (int) check("z", (double) z);
         // leave - leaf
-        if (config.isString("leafworld")) {
-            config.set(lworldph, config.getString("leafworld"));
-            config.set("leafworld", null);
+        if (config.isString(LEAFWORLD)) {
+            config.set(LEAVE_WORLD, config.getString(LEAFWORLD));
+            config.set(LEAFWORLD, null);
         }
-        if (config.isSet("xleaf")) {
-            config.set("xleave", config.getDouble("xleaf"));
-            config.set("xleaf", null);
+        if (config.isSet(XLEAF)) {
+            config.set(X_LEAVE, config.getDouble(XLEAF));
+            config.set(XLEAF, null);
         }
-        if (config.isSet("yleaf")) {
-            config.set(yl, config.getDouble("yleaf"));
-            config.set("yleaf", null);
+        if (config.isSet(YLEAF)) {
+            config.set(Y_LEAVE, config.getDouble(YLEAF));
+            config.set(YLEAF, null);
         }
-        if (config.isSet("zleaf")) {
-            config.set("zleave", config.getDouble("zleaf"));
-            config.set("zleaf", null);
+        if (config.isSet(ZLEAF)) {
+            config.set(Z_LEAVE, config.getDouble(ZLEAF));
+            config.set(ZLEAF, null);
         }
-        leaveworld = Bukkit.getWorld(check(lworldph, worldph));
-        check("xleave", 0.0);
-        check(yl, 0.0);
-        check("zleave", 0.0);
-        progressBar = check(progressbarph, true);
+        leaveworld = Bukkit.getWorld(check(LEAVE_WORLD, DEFAULT_WORLD));
+        check(X_LEAVE, 0.0);
+        check(Y_LEAVE, 0.0);
+        check(Z_LEAVE, 0.0);
+        progressBarEnabled = check(PROGRESS_BAR, true);
         if (superlegacy)
-            progressBar = false;
-        if (!config.isInt("frequency"))
-            config.set("frequency", 7L);
-        frequency = config.getLong("frequency");
+            progressBarEnabled = false;
+        if (!config.isInt(FREQUENCY))
+            config.set(FREQUENCY, 7L);
+        frequencyValue = config.getLong(FREQUENCY);
         // Text
         if (!superlegacy) {
-            textP = check(progressbartext, "level");
-            if (textP.equals("level"))
-                levelBarMode = true;
+            textP = check(PROGRESS_BAR_TEXT, LEVEL);
+            if (textP.equals(LEVEL))
+                levelBarModeEnabled = true;
         }
         // alert
-        chatAlert = check("chatAlert", !levelBarMode);
-        if (progressBar)
+        chatAlertEnabled = check(CHAT_ALERT, !levelBarModeEnabled);
+        if (progressBarEnabled)
             progressBarColor = BarColor.valueOf(check("progressBar_color", "GREEN"));
         il3x3 = check("Island_for_new_players", true);
-        rebirth = check("Rebirth_on_the_island", true);
-        levelMultiplier = check("level_multiplier", levelMultiplier);
-        protection = check("protection", protection);
-        if (worldGuard && obCanUse) {
-            worldGuard = check(wgph, worldGuard);
+        rebirthEnabled = check("Rebirth_on_the_island", true);
+        synchronized (this) {
+            levelMultiplier = check("level_multiplier", levelMultiplier);
         }
-        autojoin = check("autojoin", autojoin);
-        if (config.isSet("custom_island") && !legacy) {
+        protectionEnabled = check(PROTECTION, protectionEnabled);
+        if (worldGuardEnabled && obCanUse) {
+            worldGuardEnabled = check(WORLD_GUARD, true);
+        }
+        autojoinEnabled = check(AUTOJOIN, autojoinEnabled);
+        if (config.isSet(CUSTOM_ISLAND) && !legacy) {
             customisland = new BlockData[7][3][7];
             for (int yy = 0; yy < 3; yy++) {
                 List<String> customIslandList = config.getStringList(String.format("custom_island.y%d", yy));
@@ -1346,7 +1403,7 @@ public class Oneblock extends JavaPlugin {
         }
         if (config.isInt("set"))
             space = config.getInt("set");
-        Config.Save(config, con);
+        Config.Save(config, configFile);
     }
 
     // ALL CHECKS
@@ -1429,60 +1486,61 @@ public class Oneblock extends JavaPlugin {
         return ppii.get(i);
     }
 
+    //TODO: Fix error when invoking "/ob" from console
     @Override
     public List<String> onTabComplete(@NotNull CommandSender sender, @NotNull Command cmd, @NotNull String label, String[] args) {
         List<String> commands = new ArrayList<>();
 
         if (args.length == 1) {
-            commands.addAll(Arrays.asList("j", "join", "leave", "invite", "accept", "kick", "ver", "IDreset", "help"));
+            commands.addAll(Arrays.asList("j", "join", "leave", INVITE, "accept", "kick", "ver", "IDreset", "help"));
             if (sender.hasPermission(permissionSet)) {
-                commands.addAll(Arrays.asList("set", "setleave", progressbarph, "chatAlert", "setlevel", "clear",
-                        "levelMultiplier", "reload", "frequency", "islands", "island_rebirth", "protection", wgph,
-                        "listlvl", "autoJoin"));
+                commands.addAll(Arrays.asList("set", "setleave", PROGRESS_BAR, CHAT_ALERT, SETLEVEL, CLEAR,
+                        "levelMultiplier", RELOAD, FREQUENCY, ISLANDS, ISLAND_REBIRTH, PROTECTION, WORLD_GUARD,
+                        LISTLVL, "autoJoin"));
             }
         } else if (args.length == 2) {
-            if (args[0].equals("invite") || args[0].equals("kick")) {
+            if (args[0].equals(INVITE) || args[0].equals("kick")) {
                 for (Player ponl : online)
                     commands.add(ponl.getName());
             } else if (sender.hasPermission(permissionSet)) {
                 switch (args[0]) {
-                    case ("clear"):
-                    case ("setlevel"): {
+                    case CLEAR:
+                    case SETLEVEL: {
                         for (Player ponl : online)
                             commands.add(ponl.getName());
                         break;
                     }
                     case ("progressbarph"): {
-                        commands.add("true");
-                        commands.add("false");
-                        commands.add("level");
-                        commands.add("settext");
-                        commands.add("color");
+                        commands.add(TRUE);
+                        commands.add(FALSE);
+                        commands.add(LEVEL);
+                        commands.add(SET_TEXT);
+                        commands.add(COLOR);
                         break;
                     }
-                    case ("reload"): {
-                        commands.add(blocksfile);
-                        commands.add(chestfile);
-                        commands.add(mobfile);
-                        commands.add(flowerfile);
+                    case RELOAD: {
+                        commands.add(BLOCKS_YML);
+                        commands.add(CHESTS_YML);
+                        commands.add(MOBS_YML);
+                        commands.add(FLOWERS_YML);
                         break;
                     }
-                    case ("islands"):
+                    case ISLANDS:
                         commands.add("set_my_by_def");
                         commands.add("default");
                         break;
-                    case ("island_rebirth"):
-                    case ("protection"):
+                    case ISLAND_REBIRTH:
+                    case PROTECTION:
                     case ("worldguard"):
                     case ("autoJoin"):
-                        commands.add("true");
-                        commands.add("false");
+                        commands.add(TRUE);
+                        commands.add(FALSE);
                         break;
-                    case ("listlvl"):
+                    case LISTLVL:
                         for (int i = 0; i < levels.size(); i++)
                             commands.add(String.format("%d", i));
                         break;
-                    case ("frequency"):
+                    case FREQUENCY:
                         for (int i = 4; i <= 20; i++)
                             commands.add(String.format("%d", i));
                         break;
@@ -1498,16 +1556,16 @@ public class Oneblock extends JavaPlugin {
                 }
             }
         } else if (sender.hasPermission(permissionSet) && args.length == 3) {
-            if (args[0].equals(progressbarph)) {
-                if (args[1].equals("color"))
+            if (args[0].equals(PROGRESS_BAR)) {
+                if (args[1].equals(COLOR))
                     for (BarColor bc : BarColor.values())
                         commands.add(bc.name());
-                if (args[1].equals("settext")) {
+                if (args[1].equals(SET_TEXT)) {
                     commands.add("...");
-                    if (papi)
+                    if (papiEnabled)
                         commands.add("%OB_lvl_name%. There are %OB_need_to_lvl_up% block(s) left.");
                 }
-            } else if (args[0].equals("setlevel")) {
+            } else if (args[0].equals(SETLEVEL)) {
                 for (int i = 0; i < levels.size(); i++)
                     commands.add(String.format("%d", i));
             }

@@ -31,7 +31,7 @@ medium_chest:
 - GOLDEN_APPLE
 - APPLE
 - ENDER_PEARL
-# Hard chest [hight levels]
+# Hard chest [high levels]
 high_chest:
 - GOLDEN_SWORD
 - QUARTZ
