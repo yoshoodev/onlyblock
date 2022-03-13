@@ -7,13 +7,7 @@ import org.bukkit.util.Vector;
 import me.clip.placeholderapi.PlaceholderAPI;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.util.*;
 
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -178,12 +172,16 @@ public class Oneblock extends JavaPlugin {
             if (autojoin) {
                 Location loc = e.getTo();
                 World from = e.getFrom().getWorld();
-                World to = loc.getWorld();
-                if (!from.equals(world) && to.equals(world) &&
-                        !(loc.getY() == y + 1.2 && loc.getZ() == z + 0.5)) {
-                    e.setCancelled(true);
-                    e.getPlayer().performCommand("ob j");
+                assert loc != null;
+                if(loc.getWorld() != null) {
+                    World to = loc.getWorld();
+                    if (from != null && !from.equals(world) && to.equals(world) &&
+                            !(loc.getY() == y + 1.2 && loc.getZ() == z + 0.5)) {
+                        e.setCancelled(true);
+                        e.getPlayer().performCommand("oneblock join");
+                    }
                 }
+
             }
         }
 
@@ -192,7 +190,7 @@ public class Oneblock extends JavaPlugin {
             if (autojoin) {
                 Player pl = e.getPlayer();
                 if (pl.getWorld().equals(world))
-                    pl.performCommand("ob j");
+                    pl.performCommand("oneblock join");
             }
         }
     }
@@ -214,8 +212,8 @@ public class Oneblock extends JavaPlugin {
                         "[OB] WORLD INITIALIZATION ERROR! world = null",
                         "[OB] Trying to initialize the world again...");
                 Bukkit.getLogger().info(msg);
-                world = Bukkit.getWorld(config.getString(worldph));
-                leaveworld = Bukkit.getWorld(config.getString(lworldph));
+                world = Bukkit.getWorld(Objects.requireNonNull(config.getString(worldph)));
+                leaveworld = Bukkit.getWorld(Objects.requireNonNull(config.getString(lworldph)));
             } else {
                 Bukkit.getLogger().info("[OB] The initialization of the world was successful!");
                 worldInit();
@@ -274,12 +272,12 @@ public class Oneblock extends JavaPlugin {
                 int check = ponl.getLocation().getBlockX() - obpX - x;
                 if (check > 50 || check < -50) {
                     if (check > 200 || check < -200) {
-                        ponl.performCommand("ob j");
+                        ponl.performCommand("oneblock join");
                         return;
                     }
                     ponl.setVelocity(new Vector(-check / 30, 0, 0));
                     ponl.sendMessage(String.format("%s%s%s%s", ChatColor.YELLOW, "are you trying to go ",
-                            ChatColor.RED, "outside the customisland?"));
+                            ChatColor.RED, "outside the Island ?"));
                 }
             }
         }
@@ -512,12 +510,14 @@ public class Oneblock extends JavaPlugin {
                         space = temp;
                         config.set("set", space);
                     }
-                    config.set(worldph, world.getName());
+                    if(world != null) {
+                        config.set(worldph, world.getName());
+                    }
                     config.set("x", (double) x);
                     config.set("y", (double) y);
                     config.set("z", (double) z);
                     Config.Save(config);
-                    world.getBlockAt(x, y, z).setType(grassBlock.parseMaterial());
+                    world.getBlockAt(x, y, z).setType(Objects.requireNonNull(grassBlock.parseMaterial()));
                     recreateworldGuard();
                     return true;
                 }
@@ -529,7 +529,11 @@ public class Oneblock extends JavaPlugin {
                     Player p = (Player) sender;
                     Location l = p.getLocation();
                     leaveworld = l.getWorld();
-                    config.set(lworldph, leaveworld.getName());
+                    if (leaveworld != null){
+                        config.set(lworldph, leaveworld.getName());
+                    } else {
+                        return false;
+                    }
                     config.set("xleave", l.getX());
                     config.set(yl, l.getY());
                     config.set("zleave", l.getZ());
@@ -767,11 +771,11 @@ public class Oneblock extends JavaPlugin {
                     }
                     if (args.length <= 1) {
                         sender.sendMessage(
-                                String.format("%slevel multiplier now: %d%n5 by default", ChatColor.GREEN,
+                                String.format("%s level multiplier now: %d%n5 by default", ChatColor.GREEN,
                                         levelMultiplier));
                         return true;
                     }
-                    int lvl = levelMultiplier;
+                    int lvl;
                     try {
                         lvl = Integer.parseInt(args[1]);
                     } catch (NumberFormatException nfe) {
@@ -784,7 +788,7 @@ public class Oneblock extends JavaPlugin {
                     } else
                         sender.sendMessage(String.format("%spossible values: from 0 to 20.", ChatColor.RED));
                     sender.sendMessage(
-                            String.format("%slevel multiplier now: %d%n5 by default", ChatColor.GREEN,
+                            String.format("%s level multiplier now: %d%n5 by default", ChatColor.GREEN,
                                     levelMultiplier));
                     return true;
                 }
@@ -947,7 +951,7 @@ public class Oneblock extends JavaPlugin {
                     sender.sendMessage(String.format("%sTry blocks.yml or chests.yml", ChatColor.RED));
                     return true;
                 }
-                case ("chatAlert"): {
+                case ("chatalert"): {
                     if (!sender.hasPermission(permissionSet)) {
                         sender.sendMessage(noperm);
                         return true;
@@ -1419,7 +1423,6 @@ public class Oneblock extends JavaPlugin {
         return 0;
     }
 
-    @SuppressWarnings("unchecked")
     public static PlayerInfo gettop(int i) {
         if (pInf.size() <= i)
             return new PlayerInfo();
